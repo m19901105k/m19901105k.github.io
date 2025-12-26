@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工具集合 - 东风电驱动开发工具箱</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+
+        :root {
+            --primary-color: #4f46e5;
+            --primary-light: #818cf8;
+            --secondary-color: #0ea5e9;
+            --dark-color: #1e293b;
+            --light-color: #f8fafc;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --card-bg: #ffffff;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --radius: 12px;
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            color: var(--dark-color);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* 头部样式 */
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px;
+            animation: fadeInDown 0.8s ease;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .logo i {
+            font-size: 36px;
+            color: white;
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            background: linear-gradient(90deg, #f8fafc, #e2e8f0);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            color: #cbd5e1;
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* 主内容区域 */
+        main {
+            width: 100%;
+        }
+
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        /* 工具卡片 */
+        .tool-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 30px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .tool-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .tool-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        }
+
+        .card-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+            color: white;
+        }
+
+        .card-1 .card-icon {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+        }
+
+        .card-2 .card-icon {
+            background: linear-gradient(135deg, #0ea5e9, #0284c7);
+        }
+
+        .card-3 .card-icon {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+
+        .card-4 .card-icon {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .card-5 .card-icon {
+            background: linear-gradient(135deg, #ec4899, #be185d);
+        }
+
+        .tool-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: var(--dark-color);
+        }
+
+        .tool-description {
+            color: #64748b;
+            line-height: 1.6;
+            margin-bottom: 25px;
+            flex-grow: 1;
+        }
+
+        /* 标签样式 */
+        .tool-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .tag {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .tag-developer {
+            background-color: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .tag-security {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+
+        .tag-new {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        .tag-engineering {
+            background-color: #f3e8ff;
+            color: #7c3aed;
+        }
+
+        /* 按钮样式 */
+        .card-actions {
+            width: 100%;
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: var(--transition);
+            border: none;
+            cursor: pointer;
+            flex: 1;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #4338ca, #6366f1);
+            transform: scale(1.05);
+        }
+
+        .btn-secondary {
+            background-color: #f1f5f9;
+            color: #475569;
+            border: 2px solid #e2e8f0;
+        }
+
+        .btn-secondary:hover {
+            background-color: #e2e8f0;
+            transform: scale(1.05);
+        }
+
+        /* 未来扩展区域 */
+        .coming-soon {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: var(--radius);
+            padding: 40px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 40px;
+        }
+
+        .coming-soon h2 {
+            color: white;
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        .tool-grid-placeholder {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .placeholder-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius);
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            transition: var(--transition);
+            min-height: 150px;
+        }
+
+        .placeholder-card:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-5px);
+        }
+
+        .placeholder-card i {
+            font-size: 2rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 15px;
+        }
+
+        .placeholder-card span {
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 500;
+        }
+
+        /* 页脚 */
+        footer {
+            margin-top: 40px;
+            padding: 20px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+            width: 100%;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .footer-info {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .server-info {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.9rem;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .tool-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .card-actions {
+                flex-direction: column;
+            }
+            
+            .tool-grid-placeholder {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* 动画 */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .tool-card {
+            animation: fadeInUp 0.6s ease backwards;
+        }
+
+        .tool-card:nth-child(1) { animation-delay: 0.1s; }
+        .tool-card:nth-child(2) { animation-delay: 0.2s; }
+        .tool-card:nth-child(3) { animation-delay: 0.3s; }
+        .tool-card:nth-child(4) { animation-delay: 0.4s; }
+        .tool-card:nth-child(5) { animation-delay: 0.5s; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-toolbox"></i>
+            </div>
+            <h1>东风电驱动开发工具箱</h1>
+            <p class="subtitle">集合实用开发工具，提高工作效率。所有工具均可在本地运行，无需联网，保护数据安全。</p>
+        </header>
+
+        <main>
+            <section class="tool-grid">
+                <!-- 工具1: 字节与位转换工具 -->
+                <div class="tool-card card-1">
+                    <div class="card-icon">
+                        <i class="fas fa-exchange-alt"></i>
+                    </div>
+                    <div class="tool-tags">
+                        <span class="tag tag-developer">开发工具</span>
+                        <span class="tag tag-new">常用</span>
+                    </div>
+                    <h3>字节与位转换工具</h3>
+                    <p class="tool-description">
+		        在两种CAN总线信号描述方式之间进行转换：1)字节与位描述 2)起始位与位长度描述。支持可视化选择和实时同步转换，自动生成位读取代码。
+                    </p>
+                    <div class="card-actions">
+                        <a href="字节与位转换工具.html" class="btn btn-primary">
+                            <i class="fas fa-external-link-alt"></i> 打开工具
+                        </a>
+                        <button class="btn btn-secondary" onclick="showDetails('tool1')">
+                            <i class="fas fa-info-circle"></i> 详细说明
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 工具2: CyberChef 工具箱 -->
+                <div class="tool-card card-2">
+                    <div class="card-icon">
+                        <i class="fas fa-user-secret"></i>
+                    </div>
+                    <div class="tool-tags">
+                        <span class="tag tag-security">安全工具</span>
+                        <span class="tag tag-developer">瑞士军刀</span>
+                    </div>
+                    <h3>CyberChef 工具箱</h3>
+                    <p class="tool-description">
+                        强大的网络瑞士军刀，支持编码/解码、加密/解密、数据格式转换、正则表达式、压缩/解压缩等数百种操作。离线版本 v10.8.2，无需连接互联网。
+                    </p>
+                    <div class="card-actions">
+                        <a href="CyberChef_v10.8.2/CyberChef_v10.8.2.html" class="btn btn-primary">
+                            <i class="fas fa-external-link-alt"></i> 打开工具
+                        </a>
+                        <button class="btn btn-secondary" onclick="showDetails('tool2')">
+                            <i class="fas fa-info-circle"></i> 详细说明
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 工具3: X6000发动机水温报警点配置 -->
+                <div class="tool-card card-5">
+                    <div class="card-icon">
+                        <i class="fas fa-car"></i>
+                    </div>
+                    <div class="tool-tags">
+                        <span class="tag tag-engineering">工程工具</span>
+                        <span class="tag tag-new">陕汽仪表</span>
+                    </div>
+                    <h3>X6000发动机水温报警点配置</h3>
+                    <p class="tool-description">
+                        X6000系列发动机参数配置工具，支持发动机编号、转速绿区/红区、机油压力报警点、水温报警值、燃油类型等参数配置，实时生成标准格式的配置代码。
+                    </p>
+                    <div class="card-actions">
+                        <a href="X6000发动机水温报警点.html" class="btn btn-primary">
+                            <i class="fas fa-external-link-alt"></i> 打开工具
+                        </a>
+                        <button class="btn btn-secondary" onclick="showDetails('tool3')">
+                            <i class="fas fa-info-circle"></i> 详细说明
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 新增工具4: 字符串处理工具 -->
+                <div class="tool-card card-3">
+                    <div class="card-icon">
+                        <i class="fas fa-font"></i>
+                    </div>
+                    <div class="tool-tags">
+                        <span class="tag tag-developer">开发工具</span>
+                        <span class="tag tag-new">常用</span>
+                    </div>
+                    <h3>字符串处理工具</h3>
+                    <p class="tool-description">
+                        文本与十六进制相互转换，支持校验和、异或、取反计算。可自定义分隔符、前缀、每行字节数等格式化选项，自动填充对齐。
+                    </p>
+                    <div class="card-actions">
+                        <a href="字符串处理工具.html" class="btn btn-primary">
+                            <i class="fas fa-external-link-alt"></i> 打开工具
+                        </a>
+                        <button class="btn btn-secondary" onclick="showDetails('tool4')">
+                            <i class="fas fa-info-circle"></i> 详细说明
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 预留工具卡片2 -->
+                <div class="tool-card card-4">
+                    <div class="card-icon">
+                        <i class="fas fa-plus-circle"></i>
+                    </div>
+                    <div class="tool-tags">
+                        <span class="tag tag-new">即将上线</span>
+                    </div>
+                    <h3>正则表达式测试器</h3>
+                    <p class="tool-description">
+                        可视化正则表达式编辑和测试工具，实时匹配高亮、分组捕获、替换预览、常用模式库。支持 JavaScript、Python、PHP 等多种正则语法。
+                    </p>
+                    <div class="card-actions">
+                        <button class="btn btn-secondary" style="width: 100%;" onclick="comingSoon()">
+                            <i class="fas fa-clock"></i> 开发中
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 未来扩展区域 -->
+            <section class="coming-soon">
+                <h2><i class="fas fa-rocket"></i> 更多工具即将上线</h2>
+                <p style="color: rgba(255, 255, 255, 0.8); margin-bottom: 30px;">我们正在开发更多实用工具，敬请期待！</p>
+                
+                <div class="tool-grid-placeholder">
+                    <div class="placeholder-card">
+                        <i class="fas fa-code"></i>
+                        <span>代码格式化</span>
+                    </div>
+                    <div class="placeholder-card">
+                        <i class="fas fa-qrcode"></i>
+                        <span>二维码生成器</span>
+                    </div>
+                    <div class="placeholder-card">
+                        <i class="fas fa-database"></i>
+                        <span>SQL 编辑器</span>
+                    </div>
+                    <div class="placeholder-card">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>数据可视化</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>© 2025 东风电驱动开发工具箱 | 孟柯</p>
+            <div class="footer-info">
+                <span id="current-time"></span>
+                <span class="server-info" id="server-ip">正在获取服务器信息...</span>
+                <span>版本: 1.1.0</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- 模态框 -->
+    <div id="details-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: var(--radius); padding: 30px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 id="modal-title" style="margin: 0;">工具详情</h3>
+                <button onclick="closeModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">&times;</button>
+            </div>
+            <div id="modal-content">
+                <!-- 内容将通过JavaScript动态填充 -->
+            </div>
+            <button onclick="closeModal()" style="margin-top: 20px; padding: 10px 20px; background: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; width: 100%;">关闭</button>
+        </div>
+    </div>
+
+    <script>
+        // 获取当前时间和IP信息
+        function updateTime() {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                weekday: 'short'
+            });
+            const timeStr = now.toLocaleTimeString('zh-CN');
+            document.getElementById('current-time').textContent = `${dateStr} ${timeStr}`;
+        }
+
+        // 获取服务器IP地址
+        function getServerIP() {
+            // 尝试获取本机IP
+            fetch('https://api.ipify.org?format=json')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('server-ip').textContent = `服务器IP: ${data.ip}`;
+                })
+                .catch(() => {
+                    // 如果获取失败，显示局域网提示
+                    document.getElementById('server-ip').textContent = '本地服务器 (局域网访问)';
+                });
+        }
+
+        // 显示工具详情
+        function showDetails(toolId) {
+            const modal = document.getElementById('details-modal');
+            const title = document.getElementById('modal-title');
+            const content = document.getElementById('modal-content');
+            
+            let toolDetails = {
+                tool1: {
+                    title: '字节与位转换工具',
+                    content: `
+                        <h4>功能特点：</h4>
+                        <ul style="margin: 10px 0 20px 20px; line-height: 1.6;">
+		            <li>支持两种CAN总线信号描述方式的相互转换：字节与位描述、起始位与位长度描述</li>
+		            <li>可视化选择字节(0-7)和位(0-7)，支持单击和拖选操作</li>
+		            <li>可自定义字节和位的起始值（0起始或1起始）</li>
+		            <li>自动验证输入规则，防止信号跨字节错误</li>
+		            <li>实时生成位读取代码，包括掩码定义和读取操作</li>
+                        </ul>
+                        <h4>使用场景：</h4>
+                        <p>存储容量计算、网络带宽转换、文件大小比较、存储设备选购参考等。</p>
+		        <p>CAN总线信号定义、嵌入式开发、汽车电子、通信协议设计、硬件寄存器配置等。</p>
+		        <h4>描述方式说明：</h4>
+		        <ul style="margin: 10px 0 20px 20px; line-height: 1.6;">
+		            <li><strong>方式1：字节与位描述</strong> - 例如："1字节,3位"、"2字节,5-6位"、"7字节,all"</li>
+		            <li><strong>方式2：起始位与位长度描述</strong> - 例如："起始位22,长度2"（起始位从0开始）</li>
+		        </ul>
+                    `
+                },
+                tool2: {
+                    title: 'CyberChef 工具箱',
+                    content: `
+                        <h4>功能特点：</h4>
+                        <ul style="margin: 10px 0 20px 20px; line-height: 1.6;">
+                            <li>支持 300+ 种数据操作和转换功能</li>
+                            <li>编码/解码：Base64、Hex、URL、HTML 等</li>
+                            <li>加密/解密：AES、DES、RSA、RC4 等</li>
+                            <li>哈希计算：MD5、SHA1、SHA256、SHA512 等</li>
+                            <li>数据解析：JSON、XML、CSV、正则表达式</li>
+                            <li>压缩/解压缩：Gzip、Zlib、Brotli 等</li>
+                            <li>完全离线版本 v10.8.2，无需联网</li>
+                        </ul>
+                        <h4>适用人群：</h4>
+                        <p>网络安全工程师、开发人员、数据分析师、CTF选手、渗透测试人员。</p>
+                        <h4>注意：</h4>
+                        <p style="color: var(--warning-color); font-weight: bold;">此工具为离线版本，部分在线功能（如获取远程资源）不可用。</p>
+                    `
+                },
+                tool3: {
+                    title: 'X6000发动机水温报警点配置',
+                    content: `
+                        <h4>功能特点：</h4>
+                        <ul style="margin: 10px 0 20px 20px; line-height: 1.6;">
+                            <li>支持X6000系列发动机参数配置生成</li>
+                            <li>发动机编号、转速绿区/红区范围配置</li>
+                            <li>机油压力报警点选择（120kPa/60kPa）</li>
+                            <li>机油压力类型选择（气体机和康明斯/潍柴和玉柴柴油机）</li>
+                            <li>水温过高报警值选择（8种预设值）</li>
+                            <li>燃油类型选择（7种类型）</li>
+                            <li>实时生成标准格式配置代码</li>
+                            <li>一键复制配置代码功能</li>
+                            <li>完全离线运行，数据安全</li>
+                        </ul>
+                        <h4>输出格式：</h4>
+                        <p style="font-family: monospace; background: #f1f5f9; padding: 10px; border-radius: 4px;">
+                            { 发动机编号 , 绿区起始 , 红区起始 , 0x参数1 , 0x参数2 } ,
+                        </p>
+                        <h4>参数计算：</h4>
+                        <p>参数1 = (绿区宽度索引 << 4) | 红区宽度索引<br>
+                        参数2 = 加权计算公式结果</p>
+                        <h4>使用场景：</h4>
+                        <p>东风X6000系列发动机仪表盘报警参数配置、售后维护、研发测试。</p>
+                    `
+                },
+                tool4: {
+                    title: '字符串处理工具',
+                    content: `
+                        <h4>功能特点：</h4>
+                        <ul style="margin: 10px 0 20px 20px; line-height: 1.6;">
+                            <li>文本与十六进制相互转换</li>
+                            <li>计算校验和、异或值、取反值</li>
+                            <li>自定义分隔符和前缀</li>
+                            <li>设置每行字节数和填充对齐</li>
+                            <li>自动格式化输出结果</li>
+                            <li>完全离线运行，数据安全</li>
+                        </ul>
+                    `
+                }
+            };
+            
+            if (toolDetails[toolId]) {
+                title.textContent = toolDetails[toolId].title;
+                content.innerHTML = toolDetails[toolId].content;
+                modal.style.display = 'flex';
+            }
+        }
+
+        // 关闭模态框
+        function closeModal() {
+            document.getElementById('details-modal').style.display = 'none';
+        }
+
+        // 开发中提示
+        function comingSoon() {
+            alert('🚧 此功能正在开发中，敬请期待！');
+        }
+
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            // 更新时间
+            updateTime();
+            setInterval(updateTime, 1000);
+            
+            // 获取IP信息
+            getServerIP();
+            
+            // 为卡片添加点击效果
+            document.querySelectorAll('.tool-card').forEach(card => {
+                card.addEventListener('click', function(e) {
+                    if (!e.target.closest('.btn-secondary')) {
+                        const link = this.querySelector('.btn-primary');
+                        if (link) link.style.animation = 'pulse 0.5s';
+                    }
+                });
+            });
+            
+            // 添加键盘快捷键
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') closeModal();
+                if (e.key === '1' && e.altKey) {
+                    window.location.href = '字节与位转换工具.html';
+                }
+                if (e.key === '2' && e.altKey) {
+                    window.location.href = 'CyberChef_v10.8.2/CyberChef_v10.8.2.html';
+                }
+                if (e.key === '3' && e.altKey) {
+                    window.location.href = 'X6000发动机水温报警点.html';
+                }
+            });
+            
+            // 显示键盘快捷键提示
+            setTimeout(() => {
+                console.log('📢 快捷键提示：');
+                console.log('Alt+1: 打开字节转换工具');
+                console.log('Alt+2: 打开CyberChef工具');
+                console.log('Alt+3: 打开发动机水温报警点配置工具');
+                console.log('Esc: 关闭对话框');
+            }, 1000);
+        });
+
+        // 点击模态框外部关闭
+        document.getElementById('details-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // 添加CSS动画
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes pulse {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.05); }
+                100% { transform: scale(1); }
+            }
+            
+            .btn:active {
+                transform: scale(0.98);
+            }
+            
+            @media (max-width: 480px) {
+                .tool-card {
+                    padding: 20px;
+                }
+                
+                h1 {
+                    font-size: 1.8rem;
+                }
+                
+                .subtitle {
+                    font-size: 1rem;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

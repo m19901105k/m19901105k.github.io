@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>字符串处理工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 800px;
+            padding: 15px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .content {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .text-box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .text-box label {
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        textarea {
+            width: 100%;
+            height: 300px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            resize: none;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .buttons {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        button {
+            padding: 8px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        .settings-panel {
+            margin-top: 15px;
+            display: flex;
+            gap: 30px;
+        }
+        
+        .panel-column {
+            flex: 1;
+        }
+        
+        .panel-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .setting-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .setting-row label {
+            width: 100px;
+            text-align: right;
+            margin-right: 10px;
+        }
+        
+        input[type="text"] {
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            text-align: center;
+            width: 60px;
+        }
+        
+        .footer {
+            margin-top: 15px;
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+        }
+        
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>字符串处理工具</h2>
+        </div>
+        
+        <div class="content">
+            <div class="text-box">
+                <label for="textInput">字符：</label>
+                <textarea id="textInput" placeholder="在此输入文本...">Hello World!</textarea>
+            </div>
+            
+            <div class="buttons">
+                <button id="toHexBtn">&gt;&gt;</button>
+                <button id="toTextBtn">&lt;&lt;</button>
+            </div>
+            
+            <div class="text-box">
+                <label for="hexOutput">十六进制：</label>
+                <textarea id="hexOutput" placeholder="十六进制结果将显示在这里...">48 65 6C 6C 6F 20 57 6F 72 6C 64 21</textarea>
+            </div>
+        </div>
+        
+        <div class="settings-panel">
+            <div class="panel-column">
+                <div class="panel-title">校验和</div>
+                <div class="setting-row">
+                    <label>异或：</label>
+                    <input type="text" id="xorResult" value="00" readonly>
+                </div>
+                <div class="setting-row">
+                    <label>求和：</label>
+                    <input type="text" id="sumResult" value="00" readonly>
+                </div>
+                <div class="setting-row">
+                    <label>求和后取反：</label>
+                    <input type="text" id="inverseResult" value="00" readonly>
+                </div>
+            </div>
+            
+            <div class="panel-column">
+                <div class="panel-title">格式化</div>
+                <div class="setting-row">
+                    <label>分隔符：</label>
+                    <input type="text" id="separatorInput" value=" ">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="separatorCheckbox" checked> 启用
+                    </label>
+                </div>
+                <div class="setting-row">
+                    <label>前缀：</label>
+                    <input type="text" id="prefixInput" value="0x">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="prefixCheckbox"> 启用
+                    </label>
+                </div>
+                <div class="setting-row">
+                    <label>每行字节数：</label>
+                    <input type="text" id="bytesPerLine" value="0">
+                </div>
+                <div class="setting-row">
+                    <label>填充至：</label>
+                    <input type="text" id="alignTo" value="0">
+                    <span style="margin-left:5px;">字节</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            © 2025 东风电驱动开发工具箱 | 孟柯
+        </div>
+    </div>
+
+    <script>
+        // 获取DOM元素
+        const textInput = document.getElementById('textInput');
+        const hexOutput = document.getElementById('hexOutput');
+        const toHexBtn = document.getElementById('toHexBtn');
+        const toTextBtn = document.getElementById('toTextBtn');
+        const separatorInput = document.getElementById('separatorInput');
+        const prefixInput = document.getElementById('prefixInput');
+        const bytesPerLine = document.getElementById('bytesPerLine');
+        const alignTo = document.getElementById('alignTo');
+        const sumResult = document.getElementById('sumResult');
+        const xorResult = document.getElementById('xorResult');
+        const inverseResult = document.getElementById('inverseResult');
+        const separatorCheckbox = document.getElementById('separatorCheckbox');
+        const prefixCheckbox = document.getElementById('prefixCheckbox');
+        
+        // 转换为十六进制
+        function convertToHex() {
+            const text = textInput.value;
+            const useSeparator = separatorCheckbox.checked;
+            const usePrefix = prefixCheckbox.checked;
+            const separator = useSeparator ? separatorInput.value : '';
+            const prefix = usePrefix ? prefixInput.value : '';
+            
+            let hexString = '';
+            let sum = 0;
+            let xor = 0;
+            
+            // 处理每个字符
+            for (let i = 0; i < text.length; i++) {
+                const charCode = text.charCodeAt(i);
+                const hex = charCode.toString(16).toUpperCase().padStart(2, '0');
+                
+                hexString += prefix + hex + separator;
+                
+                // 计算校验和
+                sum += charCode;
+                if (sum >= 256) sum -= 256;
+                
+                // 计算异或值
+                xor ^= charCode;
+            }
+            
+            // 更新十六进制输出
+            hexOutput.value = hexString.trim();
+            
+            // 更新结果
+            updateResults(sum, xor);
+        }
+        
+        // 转换为文本
+        function convertToText() {
+            let hexString = hexOutput.value;
+            const separator = separatorInput.value;
+            const prefix = prefixInput.value;
+            
+            // 转换为大写
+            hexString = hexString.toUpperCase();
+            
+            // 先移除分隔符（不考虑复选框状态）
+            if (separator) {
+                const separatorRegex = new RegExp(escapeRegExp(separator.toUpperCase()), 'g');
+                hexString = hexString.replace(separatorRegex, '');
+            }
+            
+            // 再移除前缀（不考虑复选框状态，整体处理）
+            if (prefix) {
+                const prefixRegex = new RegExp(escapeRegExp(prefix.toUpperCase()), 'g');
+                hexString = hexString.replace(prefixRegex, '');
+            }
+            
+            // 只保留有效的十六进制字符
+            hexString = hexString.replace(/[^0-9A-F]/g, '');
+            
+            let text = '';
+            let sum = 0;
+            let xor = 0;
+            
+            // 每两个字符转换为一个字节
+            for (let i = 0; i < hexString.length; i += 2) {
+                const hexByte = hexString.substring(i, i + 2);
+                if (hexByte.length === 2) {
+                    const charCode = parseInt(hexByte, 16);
+                    text += String.fromCharCode(charCode);
+                    
+                    // 计算校验和
+                    sum += charCode;
+                    if (sum >= 256) sum -= 256;
+                    
+                    // 计算异或值
+                    xor ^= charCode;
+                }
+            }
+            
+            // 更新文本输入
+            textInput.value = text;
+            
+            // 更新结果
+            updateResults(sum, xor);
+        }
+        
+        // 格式化十六进制
+        function formatHex() {
+            let hexString = hexOutput.value;
+            const useSeparator = separatorCheckbox.checked;
+            const usePrefix = prefixCheckbox.checked;
+            const separator = useSeparator ? separatorInput.value : '';
+            const prefix = usePrefix ? prefixInput.value : '';
+            const bytesPerLineValue = parseInt(bytesPerLine.value) || 0;
+            const alignToValue = parseInt(alignTo.value) || 0;
+            
+            // 转换为大写
+            hexString = hexString.toUpperCase();
+            
+            // 先移除分隔符（不考虑复选框状态）
+            if (separatorInput.value) {
+                const separatorRegex = new RegExp(escapeRegExp(separatorInput.value.toUpperCase()), 'g');
+                hexString = hexString.replace(separatorRegex, '');
+            }
+            
+            // 再移除前缀（不考虑复选框状态，整体处理）
+            if (prefixInput.value) {
+                const prefixRegex = new RegExp(escapeRegExp(prefixInput.value.toUpperCase()), 'g');
+                hexString = hexString.replace(prefixRegex, '');
+            }
+            
+            // 只保留有效的十六进制字符
+            hexString = hexString.replace(/[^0-9A-F]/g, '');
+            
+            // 对齐填充
+            if (alignToValue > 0) {
+                const byteCount = hexString.length / 2;
+                const paddingNeeded = (byteCount % alignToValue === 0) ? 0 : alignToValue - (byteCount % alignToValue);
+                
+                for (let i = 0; i < paddingNeeded * 2; i++) {
+                    hexString += 'F';
+                }
+            }
+            
+            // 重新格式化为带分隔符和前缀（根据复选框状态）
+            let formattedHex = '';
+            let byteCount = 0;
+            
+            for (let i = 0; i < hexString.length; i += 2) {
+                const hexByte = hexString.substring(i, i + 2);
+                formattedHex += (usePrefix ? prefix : '') + hexByte.toUpperCase() + (useSeparator ? separator : '');
+                byteCount++;
+                
+                // 换行处理
+                if (bytesPerLineValue > 0 && byteCount % bytesPerLineValue === 0) {
+                    formattedHex += '\n';
+                }
+            }
+            
+            // 更新十六进制输出
+            hexOutput.value = formattedHex.trim();
+        }
+        
+        // 转义正则表达式特殊字符
+        function escapeRegExp(string) {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+        
+        // 更新计算结果
+        function updateResults(sum, xor) {
+            // 格式化结果为两位十六进制
+            const sumHex = sum.toString(16).toUpperCase().padStart(2, '0');
+            const xorHex = xor.toString(16).toUpperCase().padStart(2, '0');
+            const inverseHex = (255 - sum).toString(16).toUpperCase().padStart(2, '0');
+            
+            // 更新显示
+            sumResult.value = sumHex;
+            xorResult.value = xorHex;
+            inverseResult.value = inverseHex;
+        }
+        
+        // 事件监听
+        toHexBtn.addEventListener('click', convertToHex);
+        toTextBtn.addEventListener('click', convertToText);
+        
+        // 格式化参数变化时自动执行
+        [separatorInput, prefixInput, bytesPerLine, alignTo, separatorCheckbox, prefixCheckbox].forEach(input => {
+            input.addEventListener('change', formatHex);
+            input.addEventListener('input', formatHex);
+        });
+        
+        // 页面加载时计算初始值
+        window.addEventListener('DOMContentLoaded', () => {
+            convertToHex();
+        });
+        
+        // 添加输入框实时验证
+        const numberInputs = [bytesPerLine, alignTo];
+        numberInputs.forEach(input => {
+            input.addEventListener('input', () => {
+                // 只允许数字
+                input.value = input.value.replace(/[^0-9]/g, '');
+                
+                // 限制最大值
+                const value = parseInt(input.value) || 0;
+                if (value > 255) input.value = '255';
+            });
+        });
+    </script>
+</body>
+</html>

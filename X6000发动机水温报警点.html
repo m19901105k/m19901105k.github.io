@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>X6000发动机水温报警点</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --dark-color: #2c3e50;
+            --light-color: #ecf0f1;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+        }
+        
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            flex: 1;
+        }
+        
+        h1 {
+            color: var(--dark-color);
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 600;
+            font-size: 28px;
+        }
+        
+        .config-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 10px;
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        .control-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .label {
+            width: 180px;
+            font-weight: 500;
+            color: var(--dark-color);
+            text-align: right;
+            padding-right: 10px;
+        }
+        
+        .value {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+        }
+        
+        input, select {
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            width: 250px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        
+        #greenZoneStart, #greenZoneEnd, #redZoneStart, #redZoneEnd {
+            width: 120px;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        
+        .result-section {
+            margin-top: 30px;
+            position: relative;
+            background: var(--dark-color);
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 100px;
+        }
+        
+        .result-code {
+            color: white;
+            font-family: 'Consolas', 'Monaco', monospace;
+            white-space: pre;
+            padding: 15px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 6px;
+            font-size: 15px;
+            line-height: 1.6;
+            overflow-x: hidden;
+            margin-top: 40px;
+        }
+        
+        .copy-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+        
+        .copy-btn:hover {
+            background: #27ae60;
+            transform: translateY(-2px);
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px 0;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>X6000发动机水温报警点</h1>
+        
+        <div class="config-section">
+            <div class="control-group">
+                <div class="control-row">
+                    <div class="label">发动机编号：</div>
+                    <div class="value">
+                        <input type="text" id="engineNum" value="210">
+                    </div>
+                </div>
+                
+                <div class="control-row">
+                    <div class="label">转速表绿区：</div>
+                    <div class="value">
+                        <select id="greenZoneStart"></select>
+                        <select id="greenZoneEnd"></select>
+                    </div>
+                </div>
+                
+                <div class="control-row">
+                    <div class="label">转速表红区：</div>
+                    <div class="value">
+                        <select id="redZoneStart"></select>
+                        <select id="redZoneEnd"></select>
+                    </div>
+                </div>
+                
+                <div class="control-row">
+                    <div class="label">机油压力报警点：</div>
+                    <div class="value">
+                        <select id="oilPressure">
+                            <option value="120kPa">120kPa</option>
+                            <option value="60kPa" selected>60kPa</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="control-row">
+                    <div class="label">机油压力类型：</div>
+                    <div class="value">
+                        <select id="oilType">
+                            <option value="气体机和康明斯" selected>气体机和康明斯</option>
+                            <option value="潍柴和玉柴柴油机">潍柴和玉柴柴油机</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="control-row">
+                    <div class="label">水温过高报警值：</div>
+                    <div class="value">
+                        <select id="waterTemp">
+                            <option value="108">108</option>
+                            <option value="113">113</option>
+                            <option value="115">115</option>
+                            <option value="110" selected>110</option>
+                            <option value="102">102</option>
+                            <option value="104">104</option>
+                            <option value="107">107</option>
+                            <option value="98">98</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="control-row">
+                    <div class="label">燃油类型：</div>
+                    <div class="value">
+                        <select id="fuelType">
+                            <option value="Fuel">Fuel</option>
+                            <option value="CNG-博世">CNG-博世</option>
+                            <option value="CNG-伍德沃德" selected>CNG-伍德沃德</option>
+                            <option value="LNG-博世">LNG-博世</option>
+                            <option value="LNG-伍德沃德">LNG-伍德沃德</option>
+                            <option value="HPDI">HPDI</option>
+                            <option value="氢">氢</option>
+                            <option value="NONE">NONE</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="result-section">
+            <button class="copy-btn" onclick="copyToClipboard()">复制代码</button>
+            <div class="result-code" id="result">{	210	,	900	,	2000	,	0x00	,	0x00	}	,</div>
+        </div>
+    </div>
+
+    <div class="footer">
+        © 2025 东风电驱动系统有限公司 | 孟柯
+    </div>
+
+    <script>
+        // 初始化转速范围下拉菜单
+        function initRpmSelectors() {
+            const greenStart = document.getElementById('greenZoneStart');
+            const greenEnd = document.getElementById('greenZoneEnd');
+            const redStart = document.getElementById('redZoneStart');
+            const redEnd = document.getElementById('redZoneEnd');
+            
+            // 绿区起始范围 900-1200，步长100
+            for (let i = 900; i <= 1200; i += 100) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = i;
+                greenStart.appendChild(option);
+            }
+            
+            // 红区起始范围 1800-2500，步长100
+            for (let i = 1800; i <= 2500; i += 100) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = i;
+                redStart.appendChild(option);
+            }
+            
+            // 设置默认值
+            greenStart.value = 900;
+            redStart.value = 2000;
+            
+            // 初始化结束范围
+            updateGreenEndOptions(parseInt(greenStart.value));
+            updateRedEndOptions(parseInt(redStart.value));
+            
+            // 动态更新绿区起始范围
+            greenStart.addEventListener('change', function() {
+                const startValue = parseInt(this.value);
+                updateGreenEndOptions(startValue);
+                
+                // 如果当前结束值小于起始值+200，则自动设置为起始值+200
+                const currentEnd = parseInt(greenEnd.value);
+                if (currentEnd < startValue + 200) {
+                    greenEnd.value = startValue + 200;
+                }
+                
+                calculate();
+            });
+            
+            // 动态更新红区起始范围
+            redStart.addEventListener('change', function() {
+                const startValue = parseInt(this.value);
+                updateRedEndOptions(startValue);
+                
+                // 如果当前结束值小于起始值+200，则自动设置为起始值+200
+                const currentEnd = parseInt(redEnd.value);
+                if (currentEnd < startValue + 200) {
+                    redEnd.value = startValue + 200;
+                }
+                
+                calculate();
+            });
+        }
+        
+        function updateGreenEndOptions(start) {
+            const greenEnd = document.getElementById('greenZoneEnd');
+            const currentValue = parseInt(greenEnd.value);
+            greenEnd.innerHTML = '';
+            
+            // 绿区结束范围 = 起始 + 200 至 1700，步长100
+            const maxEnd = 1700;
+            for (let i = start + 200; i <= maxEnd; i += 100) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = i;
+                greenEnd.appendChild(option);
+            }
+            
+            // 保持当前值在范围内
+            if (currentValue >= start + 200 && currentValue <= maxEnd) {
+                greenEnd.value = currentValue;
+            } else {
+                greenEnd.value = start + 200;
+            }
+        }
+        
+        function updateRedEndOptions(start) {
+            const redEnd = document.getElementById('redZoneEnd');
+            const currentValue = parseInt(redEnd.value);
+            redEnd.innerHTML = '';
+            
+            // 红区结束范围 = 起始 + 200 至 3400，步长100
+            const maxEnd = 3400;
+            for (let i = start + 200; i <= maxEnd; i += 100) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = i;
+                redEnd.appendChild(option);
+            }
+            
+            // 保持当前值在范围内
+            if (currentValue >= start + 200 && currentValue <= maxEnd) {
+                redEnd.value = currentValue;
+            } else {
+                redEnd.value = start + 200;
+            }
+        }
+        
+        // 计算参数配置
+        function calculate() {
+            // 获取输入值
+            const engineNum = document.getElementById('engineNum').value;
+            const greenZoneStart = parseInt(document.getElementById('greenZoneStart').value);
+            const greenZoneEnd = parseInt(document.getElementById('greenZoneEnd').value);
+            const redZoneStart = parseInt(document.getElementById('redZoneStart').value);
+            const redZoneEnd = parseInt(document.getElementById('redZoneEnd').value);
+            
+            // 直接获取下拉框选中项的索引
+            const oilPressureSelect = document.getElementById('oilPressure');
+            const oilTypeSelect = document.getElementById('oilType');
+            const waterTempSelect = document.getElementById('waterTemp');
+            const fuelTypeSelect = document.getElementById('fuelType');
+            
+            const oilPressureIndex = oilPressureSelect.selectedIndex;  // 0=120kPa, 1=60kPa
+            const oilTypeIndex = oilTypeSelect.selectedIndex;  // 0=气体机和康明斯, 1=潍柴和玉柴柴油机
+            const waterTempIndex = waterTempSelect.selectedIndex;  // 对应水温值数组的索引
+            const fuelTypeIndex = fuelTypeSelect.selectedIndex;  // 对应燃油类型数组的索引
+            
+            // 计算绿区宽度和红区宽度
+            const greenZoneWidth = greenZoneEnd - greenZoneStart;
+            const redZoneWidth = redZoneEnd - redZoneStart;
+            
+            // 更新后的rpmRanges数组
+            const rpmRanges = [400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 200, 300];
+            
+            // 位权重
+            const bitWeights = [128, 64, 8, 1];
+            
+            // 公式1: REPT(" ",4-LEN(B1))
+            const spaces = " ".repeat(4 - engineNum.length);
+            
+            // 公式2: MATCH(C2-B2,$H$1:$H$12,0)-1
+            const greenRangeIndex = findIndex(rpmRanges, greenZoneWidth);
+            const redRangeIndex = findIndex(rpmRanges, redZoneWidth);
+            
+            // 公式4: SUMPRODUCT(J1:M1,J16:M16) - 使用修改后的公式
+            const paramValue = bitWeights[0] * oilPressureIndex + 
+                              bitWeights[1] * oilTypeIndex + 
+                              bitWeights[2] * waterTempIndex + 
+                              bitWeights[3] * fuelTypeIndex;
+            
+            // 最终输出 - 单行格式，十六进制参数使用大写
+            // param1的高四位为绿区宽度索引，低四位为红区宽度索引
+            const param1 = (greenRangeIndex << 4) | redRangeIndex;
+            const param2 = paramValue;
+            
+            const result = `{\t${engineNum}${spaces}\t,\t${greenZoneStart}\t,\t${redZoneStart}\t,\t0x${param1.toString(16).padStart(2, '0').toUpperCase()}\t,\t0x${param2.toString(16).padStart(2, '0').toUpperCase()}\t}\t,`;
+            
+            document.getElementById('result').textContent = result;
+        }
+        
+        function findIndex(arr, value) {
+            const index = arr.findIndex(item => item === value);
+            return index >= 0 ? index : 0;
+        }
+        
+        // 复制到剪贴板
+        function copyToClipboard() {
+            const result = document.getElementById('result');
+            navigator.clipboard.writeText(result.textContent)
+                .then(() => alert('配置代码已复制到剪贴板'))
+                .catch(err => console.error('复制失败: ', err));
+        }
+        
+        // 为所有输入元素添加输入监听
+        function addInputListeners() {
+            const inputs = document.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                input.addEventListener('input', calculate);
+                input.addEventListener('change', calculate);
+            });
+        }
+        
+        // 初始化页面
+        window.onload = function() {
+            initRpmSelectors();
+            addInputListeners();
+            calculate();
+        };
+    </script>
+</body>
+</html>

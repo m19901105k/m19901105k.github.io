@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>字节与位转换工具</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f0f2f5;
+            color: #333;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            padding: 25px;
+            flex: 1;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 5px;
+            font-size: 24px;
+        }
+        
+        .content {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .methods-container {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .method-section {
+            flex: 1;
+            min-width: 450px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #e1e8ed;
+        }
+        
+        .section-header {
+            background-color: #3498db;
+            color: white;
+            padding: 12px 20px;
+            font-weight: 600;
+        }
+        
+        .section-header h2 {
+            font-size: 18px;
+            margin: 0;
+        }
+        
+        .section-content {
+            padding: 20px;
+        }
+        
+        .byte-bits-selector {
+            margin-bottom: 15px;
+        }
+        
+        .byte-selector, .bit-selector {
+            margin-bottom: 15px;
+        }
+        
+        .selector-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .selector-title h3 {
+            font-size: 16px;
+            color: #2c3e50;
+            margin: 0;
+            white-space: nowrap;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-left: 10px;
+        }
+        
+        .checkbox-group label {
+            font-size: 14px;
+            white-space: nowrap;
+        }
+        
+        .bits-container, .bytes-container {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 4px;
+            margin-bottom: 8px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+            height: 50px; /* 增加容器高度 */
+            align-items: flex-end; /* 将内容向下对齐 */
+            padding-top: 10px; /* 增加顶部内边距 */
+        }
+        
+        .bit-item, .byte-item {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #bdc3c7;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            user-select: none;
+            flex-shrink: 0;
+            position: relative;
+            margin-top: 5px; /* 增加顶部外边距 */
+        }
+        
+        .bit-item:hover, .byte-item:hover {
+            transform: translateY(-3px); /* 减少上移距离 */
+            box-shadow: 0 3px 5px rgba(0,0,0,0.1);
+        }
+        
+        .bit-item.selected, .byte-item.selected {
+            background-color: #3498db;
+            color: white;
+            border-color: #2980b9;
+        }
+        
+        .bit-item.range-start {
+            border-top-left-radius: 8px;
+            border-bottom-left-radius: 8px;
+        }
+        
+        .bit-item.range-end {
+            border-top-right-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }
+        
+        .bit-item.in-range {
+            background-color: #5dade2;
+            color: white;
+            border-color: #3498db;
+        }
+        
+        .byte-item.in-range {
+            background-color: #5dade2;
+            color: white;
+            border-color: #3498db;
+        }
+        
+        .bit-item.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        
+        .byte-bits-text {
+            font-size: 16px;
+            padding: 10px 0;
+            font-family: monospace;
+            color: #2c3e50;
+            min-height: 24px;
+        }
+        
+        .start-bit-inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .input-group {
+            flex: 1;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 14px;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #bdc3c7;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border 0.2s;
+        }
+        
+        .input-group input:focus {
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        
+        .input-group input.invalid {
+            border-color: #e74c3c;
+            background-color: #fdedec;
+        }
+        
+        .code-generation {
+            margin-top: 15px;
+            border-top: 1px solid #eaeaea;
+            padding-top: 15px;
+        }
+        
+        .code-generation h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .code-block {
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            padding: 12px;
+            font-family: monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            white-space: pre;
+            overflow-x: auto;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eaeaea;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        
+        @media (max-width: 992px) {
+            .container {
+                max-width: 95%;
+                padding: 15px;
+            }
+            
+            .methods-container {
+                flex-direction: column;
+            }
+            
+            .method-section {
+                min-width: auto;
+            }
+            
+            .bits-container, .bytes-container {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>字节与位转换工具</h1>
+        </header>
+        
+        <div class="content">
+            <div class="methods-container">
+                <!-- 字节与位描述 -->
+                <div class="method-section">
+                    <div class="section-header">
+                        <h2>字节与位描述</h2>
+                    </div>
+                    
+                    <div class="section-content">
+                        <div class="byte-bits-selector">
+                            <!-- 字节选择 -->
+                            <div class="byte-selector">
+                                <div class="selector-title">
+                                    <h3 id="byteTitle">字节选择 (0-7)</h3>
+                                    <div class="checkbox-group">
+                                        <input type="checkbox" id="byteStartCheckbox" checked>
+                                        <label for="byteStartCheckbox">从0开始</label>
+                                    </div>
+                                </div>
+                                <div class="bytes-container">
+                                    <!-- 字节选项将通过JS动态生成 -->
+                                </div>
+                            </div>
+                            
+                            <!-- 位选择 -->
+                            <div class="bit-selector">
+                                <div class="selector-title">
+                                    <h3 id="bitTitle">位选择 (0-7)</h3>
+                                    <div class="checkbox-group">
+                                        <input type="checkbox" id="bitStartCheckbox" checked>
+                                        <label for="bitStartCheckbox">从0开始</label>
+                                    </div>
+                                </div>
+                                <div class="bits-container">
+                                    <!-- 位选项将通过JS动态生成 -->
+                                </div>
+                            </div>
+                            
+                            <!-- 文本描述 -->
+                            <div class="byte-bits-text" id="byteBitsText">未选择</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 起始位与位长度描述 -->
+                <div class="method-section">
+                    <div class="section-header">
+                        <h2>起始位与位长度描述</h2>
+                    </div>
+                    
+                    <div class="section-content">
+                        <div class="start-bit-inputs">
+                            <div class="input-group">
+                                <label for="startBit">起始位 (0-63)</label>
+                                <input type="number" id="startBit" min="0" max="63" placeholder="0">
+                            </div>
+                            <div class="input-group">
+                                <label for="bitLength">位长度 (1-64)</label>
+                                <input type="number" id="bitLength" min="1" max="64" placeholder="1">
+                            </div>
+                        </div>
+                        <div class="byte-bits-text" id="startBitText">起始位: 0, 长度: 1</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 位读取代码生成 -->
+            <div class="code-generation">
+                <h3>位读取代码生成</h3>
+                <div class="code-block" id="bitOperationCode">
+                    请先选择要操作的位
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            &copy; 2025 东风电驱动系统有限公司 | 孟柯
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取DOM元素
+            const bytesContainer = document.querySelector('.bytes-container');
+            const bitsContainer = document.querySelector('.bits-container');
+            const startBitInput = document.getElementById('startBit');
+            const bitLengthInput = document.getElementById('bitLength');
+            const byteBitsText = document.getElementById('byteBitsText');
+            const startBitText = document.getElementById('startBitText');
+            const byteStartCheckbox = document.getElementById('byteStartCheckbox');
+            const bitStartCheckbox = document.getElementById('bitStartCheckbox');
+            const byteTitle = document.getElementById('byteTitle');
+            const bitTitle = document.getElementById('bitTitle');
+            const bitOperationCode = document.getElementById('bitOperationCode');
+            
+            // 状态变量
+            let selectedBytes = [];
+            let selectedBits = [];
+            let byteStartIndex = 0;
+            let bitStartIndex = 0;
+            let isDragging = false;
+            let dragType = '';
+            let dragStartIndex = -1;
+            let isBitSelectionLocked = false;
+            
+            // 初始化字节和位选择器
+            function initializeSelectors() {
+                bytesContainer.innerHTML = '';
+                bitsContainer.innerHTML = '';
+                
+                // 创建字节选项(0-7)
+                for (let i = 0; i < 8; i++) {
+                    const byteItem = document.createElement('div');
+                    byteItem.className = 'byte-item';
+                    byteItem.dataset.index = i;
+                    byteItem.textContent = i + byteStartIndex;
+                    
+                    byteItem.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        startDrag('byte', i);
+                    });
+                    byteItem.addEventListener('mouseup', (e) => {
+                        e.preventDefault();
+                        if (isDragging && dragType === 'byte') {
+                            endDrag('byte', i);
+                        }
+                    });
+                    byteItem.addEventListener('mouseenter', () => {
+                        if (isDragging && dragType === 'byte') {
+                            handleDragEnter('byte', i);
+                        }
+                    });
+                    
+                    bytesContainer.appendChild(byteItem);
+                }
+                
+                // 创建位选项(0-7)
+                for (let i = 0; i < 8; i++) {
+                    const bitItem = document.createElement('div');
+                    bitItem.className = 'bit-item';
+                    if (isBitSelectionLocked) {
+                        bitItem.classList.add('disabled');
+                    }
+                    bitItem.dataset.index = i;
+                    bitItem.textContent = i + bitStartIndex;
+                    
+                    bitItem.addEventListener('mousedown', (e) => {
+                        if (!isBitSelectionLocked) {
+                            e.preventDefault();
+                            startDrag('bit', i);
+                        }
+                    });
+                    bitItem.addEventListener('mouseup', (e) => {
+                        if (!isBitSelectionLocked && isDragging && dragType === 'bit') {
+                            e.preventDefault();
+                            endDrag('bit', i);
+                        }
+                    });
+                    bitItem.addEventListener('mouseenter', () => {
+                        if (!isBitSelectionLocked && isDragging && dragType === 'bit') {
+                            handleDragEnter('bit', i);
+                        }
+                    });
+                    
+                    bitsContainer.appendChild(bitItem);
+                }
+                
+                updateTitles();
+                updateByteBitsDisplay();
+                updateByteBitSelection();
+                updateBitOperationCode();
+            }
+            
+            // 更新标题
+            function updateTitles() {
+                byteTitle.textContent = `字节选择 (${byteStartIndex}-${byteStartIndex + 7})`;
+                bitTitle.textContent = `位选择 (${bitStartIndex}-${bitStartIndex + 7})`;
+            }
+            
+            // 开始拖选
+            function startDrag(type, index) {
+                isDragging = true;
+                dragType = type;
+                dragStartIndex = index;
+                
+                if (type === 'byte') {
+                    selectedBytes = [index];
+                } else {
+                    selectedBits = [index];
+                }
+                
+                updateByteBitSelection();
+                updateByteBitsDisplay();
+                updateStartBitFromSelection();
+                updateBitOperationCode();
+            }
+            
+            // 结束拖选
+            function endDrag(type, index) {
+                isDragging = false;
+                
+                if (type === 'byte') {
+                    if (selectedBytes.length > 1) {
+                        isBitSelectionLocked = true;
+                        selectedBits = [0,1,2,3,4,5,6,7];
+                    } else {
+                        isBitSelectionLocked = false;
+                    }
+                    
+                    updateBitSelectionState();
+                }
+                
+                updateByteBitSelection();
+                updateByteBitsDisplay();
+                updateStartBitFromSelection();
+                updateBitOperationCode();
+            }
+            
+            // 更新位选择状态
+            function updateBitSelectionState() {
+                document.querySelectorAll('.bit-item').forEach(item => {
+                    if (isBitSelectionLocked) {
+                        item.classList.add('disabled');
+                    } else {
+                        item.classList.remove('disabled');
+                    }
+                });
+            }
+            
+            // 处理拖选进入
+            function handleDragEnter(type, index) {
+                if (!isDragging || dragType !== type) return;
+                
+                if (type === 'byte') {
+                    selectedBytes = [];
+                    const start = Math.min(dragStartIndex, index);
+                    const end = Math.max(dragStartIndex, index);
+                    
+                    for (let i = start; i <= end; i++) {
+                        selectedBytes.push(i);
+                    }
+                    
+                    if (selectedBytes.length > 1) {
+                        isBitSelectionLocked = true;
+                        selectedBits = [0,1,2,3,4,5,6,7];
+                        updateBitSelectionState();
+                    }
+                } else {
+                    if (!isBitSelectionLocked) {
+                        selectedBits = [];
+                        const start = Math.min(dragStartIndex, index);
+                        const end = Math.max(dragStartIndex, index);
+                        
+                        for (let i = start; i <= end; i++) {
+                            selectedBits.push(i);
+                        }
+                    }
+                }
+                
+                updateByteBitSelection();
+                updateByteBitsDisplay();
+                updateStartBitFromSelection();
+                updateBitOperationCode();
+            }
+            
+            // 更新字节和位选择显示
+            function updateByteBitSelection() {
+                document.querySelectorAll('.byte-item').forEach(item => {
+                    const index = parseInt(item.dataset.index);
+                    
+                    item.classList.remove('selected', 'in-range', 'range-start', 'range-end');
+                    
+                    if (selectedBytes.includes(index)) {
+                        item.classList.add('selected');
+                        
+                        if (selectedBytes.length > 1) {
+                            if (index === Math.min(...selectedBytes)) {
+                                item.classList.add('range-start');
+                            } else if (index === Math.max(...selectedBytes)) {
+                                item.classList.add('range-end');
+                            } else {
+                                item.classList.add('in-range');
+                            }
+                        }
+                    }
+                    
+                    item.textContent = index + byteStartIndex;
+                });
+                
+                document.querySelectorAll('.bit-item').forEach(item => {
+                    const index = parseInt(item.dataset.index);
+                    
+                    item.classList.remove('selected', 'in-range', 'range-start', 'range-end');
+                    
+                    if (selectedBits.includes(index)) {
+                        item.classList.add('selected');
+                        
+                        if (selectedBits.length > 1) {
+                            if (index === Math.min(...selectedBits)) {
+                                item.classList.add('range-start');
+                            } else if (index === Math.max(...selectedBits)) {
+                                item.classList.add('range-end');
+                            } else {
+                                item.classList.add('in-range');
+                            }
+                        }
+                    }
+                    
+                    item.textContent = index + bitStartIndex;
+                });
+            }
+            
+            // 更新字节与位描述文本
+            function updateByteBitsDisplay() {
+                if (selectedBytes.length === 0 || selectedBits.length === 0) {
+                    byteBitsText.textContent = '未选择';
+                    return;
+                }
+                
+                selectedBytes.sort((a, b) => a - b);
+                selectedBits.sort((a, b) => a - b);
+                
+                let byteDesc = '';
+                if (selectedBytes.length === 1) {
+                    byteDesc = `${selectedBytes[0] + byteStartIndex}字节`;
+                } else {
+                    const isContinuous = selectedBytes.every((val, i, arr) => 
+                        i === 0 || val === arr[i-1] + 1
+                    );
+                    
+                    if (isContinuous) {
+                        byteDesc = `${selectedBytes[0] + byteStartIndex}-${selectedBytes[selectedBytes.length-1] + byteStartIndex}字节`;
+                    } else {
+                        byteDesc = selectedBytes.map(b => b + byteStartIndex).join(',') + '字节';
+                    }
+                }
+                
+                let bitDesc = '';
+                if (selectedBits.length === 8) {
+                    bitDesc = 'all';
+                } else if (selectedBits.length === 1) {
+                    bitDesc = `${selectedBits[0] + bitStartIndex}位`;
+                } else {
+                    const isContinuous = selectedBits.every((val, i, arr) => 
+                        i === 0 || val === arr[i-1] + 1
+                    );
+                    
+                    if (isContinuous) {
+                        bitDesc = `${selectedBits[0] + bitStartIndex}-${selectedBits[selectedBits.length-1] + bitStartIndex}位`;
+                    } else {
+                        bitDesc = selectedBits.map(b => b + bitStartIndex).join(',') + '位';
+                    }
+                }
+                
+                byteBitsText.textContent = `${byteDesc}, ${bitDesc}`;
+            }
+            
+            // 检查起始位和位长度是否有效
+            function validateStartBitAndLength(startBit, bitLength) {
+                startBitInput.classList.remove('invalid');
+                bitLengthInput.classList.remove('invalid');
+                
+                if (bitLength > 8) {
+                    if (bitLength % 8 !== 0) {
+                        bitLengthInput.classList.add('invalid');
+                        return false;
+                    }
+                    
+                    if (startBit % 8 !== 0) {
+                        startBitInput.classList.add('invalid');
+                        return false;
+                    }
+                } else {
+                    const startByte = Math.floor(startBit / 8);
+                    const endByte = Math.floor((startBit + bitLength - 1) / 8);
+                    
+                    if (startByte !== endByte) {
+                        startBitInput.classList.add('invalid');
+                        bitLengthInput.classList.add('invalid');
+                        return false;
+                    }
+                }
+                
+                return true;
+            }
+            
+            // 根据选择更新起始位和位长度
+            function updateStartBitFromSelection() {
+                if (selectedBytes.length === 0 || selectedBits.length === 0) {
+                    startBitInput.value = '';
+                    bitLengthInput.value = '';
+                    startBitText.textContent = '起始位: 0, 长度: 1';
+                    return;
+                }
+                
+                selectedBytes.sort((a, b) => a - b);
+                selectedBits.sort((a, b) => a - b);
+                
+                const startByte = Math.min(...selectedBytes);
+                const startBitInByte = Math.min(...selectedBits);
+                const startBit = startByte * 8 + startBitInByte;
+                
+                let bitLength = 0;
+                
+                if (selectedBytes.length === 1) {
+                    bitLength = selectedBits.length;
+                } else {
+                    const endByte = Math.max(...selectedBytes);
+                    const endBitInByte = Math.max(...selectedBits);
+                    
+                    if (selectedBits.length === 8) {
+                        bitLength = (endByte - startByte + 1) * 8;
+                    } else {
+                        bitLength = (endByte - startByte) * 8 + (endBitInByte - startBitInByte + 1);
+                    }
+                }
+                
+                if (!validateStartBitAndLength(startBit, bitLength)) {
+                    return;
+                }
+                
+                startBitInput.value = startBit;
+                bitLengthInput.value = bitLength;
+                
+                startBitText.textContent = `起始位: ${startBit}, 长度: ${bitLength}`;
+            }
+            
+            // 根据起始位和位长度更新选择
+            function updateSelectionFromStartBit() {
+                const startBit = parseInt(startBitInput.value) || 0;
+                const bitLength = parseInt(bitLengthInput.value) || 1;
+                
+                if (startBit < 0 || startBit > 63) return;
+                if (bitLength < 1 || bitLength > 64) return;
+                if (startBit + bitLength > 64) return;
+                
+                if (!validateStartBitAndLength(startBit, bitLength)) {
+                    return;
+                }
+                
+                const endBit = startBit + bitLength - 1;
+                
+                selectedBytes = [];
+                selectedBits = [];
+                isBitSelectionLocked = false;
+                
+                for (let bit = startBit; bit <= endBit; bit++) {
+                    const byteIndex = Math.floor(bit / 8);
+                    const bitIndex = bit % 8;
+                    
+                    if (!selectedBytes.includes(byteIndex)) {
+                        selectedBytes.push(byteIndex);
+                    }
+                    
+                    if (!selectedBits.includes(bitIndex)) {
+                        selectedBits.push(bitIndex);
+                    }
+                }
+                
+                if (selectedBytes.length > 1) {
+                    isBitSelectionLocked = true;
+                    selectedBits = [0,1,2,3,4,5,6,7];
+                }
+                
+                selectedBytes.sort((a, b) => a - b);
+                selectedBits.sort((a, b) => a - b);
+                
+                updateBitSelectionState();
+                updateByteBitSelection();
+                updateByteBitsDisplay();
+                updateBitOperationCode();
+                
+                startBitText.textContent = `起始位: ${startBit}, 长度: ${bitLength}`;
+            }
+            
+            // 更新位操作代码
+            function updateBitOperationCode() {
+                if (selectedBytes.length === 0 || selectedBits.length === 0) {
+                    bitOperationCode.textContent = '请先选择要操作的位';
+                    return;
+                }
+                
+                selectedBytes.sort((a, b) => a - b);
+                selectedBits.sort((a, b) => a - b);
+                
+                // 计算掩码
+                let mask = 0;
+                for (const bit of selectedBits) {
+                    mask |= (1 << bit);
+                }
+                
+                // 计算移位
+                const shift = Math.min(...selectedBits);
+                
+                // 生成代码
+                let code = '';
+                code += `// 掩码\n`;
+                const hexMask = mask.toString(16).toUpperCase().padStart(2, '0');
+                code += `#define MASK 0x${hexMask}\n\n`;
+                
+                code += `// 读取位\n`;
+                code += `uint8_t value = (data & 0x${hexMask}) >> ${shift};`;
+                
+                bitOperationCode.textContent = code;
+            }
+            
+            // 更新起始值显示
+            function updateStartIndexDisplay() {
+                byteStartIndex = byteStartCheckbox.checked ? 0 : 1;
+                bitStartIndex = bitStartCheckbox.checked ? 0 : 1;
+                
+                initializeSelectors();
+            }
+            
+            // 事件监听
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+            
+            startBitInput.addEventListener('input', () => {
+                updateSelectionFromStartBit();
+            });
+            
+            bitLengthInput.addEventListener('input', () => {
+                const bitLength = parseInt(bitLengthInput.value) || 1;
+                const startBit = parseInt(startBitInput.value) || 0;
+                
+                if (bitLength > 8) {
+                    if (bitLength % 8 !== 0) {
+                        const adjustedLength = Math.floor(bitLength / 8) * 8;
+                        bitLengthInput.value = adjustedLength;
+                    }
+                    
+                    if (startBit % 8 !== 0) {
+                        const adjustedStart = Math.floor(startBit / 8) * 8;
+                        startBitInput.value = adjustedStart;
+                    }
+                } else {
+                    const startByte = Math.floor(startBit / 8);
+                    const endByte = Math.floor((startBit + bitLength - 1) / 8);
+                    
+                    if (startByte !== endByte) {
+                        const maxLength = 8 - (startBit % 8);
+                        bitLengthInput.value = Math.min(bitLength, maxLength);
+                    }
+                }
+                
+                updateSelectionFromStartBit();
+            });
+            
+            byteStartCheckbox.addEventListener('change', () => {
+                bitStartCheckbox.checked = byteStartCheckbox.checked;
+                
+                updateStartIndexDisplay();
+                updateByteBitsDisplay();
+                updateStartBitFromSelection();
+                updateBitOperationCode();
+            });
+            
+            bitStartCheckbox.addEventListener('change', () => {
+                updateStartIndexDisplay();
+                updateByteBitsDisplay();
+                updateStartBitFromSelection();
+                updateBitOperationCode();
+            });
+            
+            // 初始化
+            initializeSelectors();
+            
+            // 设置默认值
+            selectedBytes = [0];
+            selectedBits = [0];
+            byteStartCheckbox.checked = true;
+            bitStartCheckbox.checked = true;
+            updateByteBitSelection();
+            updateByteBitsDisplay();
+            updateStartBitFromSelection();
+            updateBitOperationCode();
+        });
+    </script>
+</body>
+</html>
