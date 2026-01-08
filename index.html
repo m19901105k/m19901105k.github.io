@@ -112,6 +112,7 @@
             position: relative;
             overflow: hidden;
             border: 1px solid rgba(255, 255, 255, 0.1);
+            animation: fadeInUp 0.5s ease backwards;
         }
 
         .tool-card:hover {
@@ -383,17 +384,6 @@
                 transform: translateY(0);
             }
         }
-
-        .tool-card {
-            animation: fadeInUp 0.6s ease backwards;
-        }
-
-        .tool-card:nth-child(1) { animation-delay: 0.1s; }
-        .tool-card:nth-child(2) { animation-delay: 0.2s; }
-        .tool-card:nth-child(3) { animation-delay: 0.3s; }
-        .tool-card:nth-child(4) { animation-delay: 0.4s; }
-        .tool-card:nth-child(5) { animation-delay: 0.5s; }
-        .tool-card:nth-child(6) { animation-delay: 0.6s; }
     </style>
 </head>
 <body>
@@ -408,14 +398,13 @@
 
         <main>
             <section class="tool-grid">
-                <!-- 工具1: 字节与位转换工具 -->
+                                <!-- 工具1: 字节与位转换工具 -->
                 <div class="tool-card card-1">
                     <div class="card-icon">
                         <i class="fas fa-exchange-alt"></i>
                     </div>
                     <div class="tool-tags">
-                        <span class="tag tag-developer">开发工具</span>
-                        <span class="tag tag-new">常用</span>
+                        <span class="tag tag-developer">开发工具</span><span class="tag tag-new">常用</span>
                     </div>
                     <h3>字节与位转换工具</h3>
                     <p class="tool-description">
@@ -430,15 +419,13 @@
                         </button>
                     </div>
                 </div>
-
                 <!-- 工具2: CyberChef 工具箱 -->
                 <div class="tool-card card-2">
                     <div class="card-icon">
                         <i class="fas fa-user-secret"></i>
                     </div>
                     <div class="tool-tags">
-                        <span class="tag tag-security">安全工具</span>
-                        <span class="tag tag-developer">瑞士军刀</span>
+                        <span class="tag tag-security">安全工具</span><span class="tag tag-developer">瑞士军刀</span>
                     </div>
                     <h3>CyberChef 工具箱</h3>
                     <p class="tool-description">
@@ -453,15 +440,13 @@
                         </button>
                     </div>
                 </div>
-
                 <!-- 工具3: X6000发动机水温报警点配置 -->
-                <div class="tool-card card-5">
+                <div class="tool-card card-3">
                     <div class="card-icon">
                         <i class="fas fa-car"></i>
                     </div>
                     <div class="tool-tags">
-                        <span class="tag tag-engineering">工程工具</span>
-                        <span class="tag tag-new">陕汽仪表</span>
+                        <span class="tag tag-engineering">工程工具</span><span class="tag tag-new">陕汽仪表</span>
                     </div>
                     <h3>X6000发动机水温报警点配置</h3>
                     <p class="tool-description">
@@ -476,15 +461,13 @@
                         </button>
                     </div>
                 </div>
-
                 <!-- 工具4: 字符串处理工具 -->
-                <div class="tool-card card-3">
+                <div class="tool-card card-4">
                     <div class="card-icon">
                         <i class="fas fa-font"></i>
                     </div>
                     <div class="tool-tags">
-                        <span class="tag tag-developer">开发工具</span>
-                        <span class="tag tag-new">常用</span>
+                        <span class="tag tag-developer">开发工具</span><span class="tag tag-new">常用</span>
                     </div>
                     <h3>字符串处理工具</h3>
                     <p class="tool-description">
@@ -499,16 +482,13 @@
                         </button>
                     </div>
                 </div>
-
-                <!-- 新增工具5: CAN busoff分析 -->
-                <div class="tool-card card-6">
+                <!-- 工具5: CAN busoff分析工具 -->
+                <div class="tool-card card-5">
                     <div class="card-icon">
                         <i class="fas fa-microchip"></i>
                     </div>
                     <div class="tool-tags">
-                        <span class="tag tag-can">CAN总线</span>
-                        <span class="tag tag-engineering">工程工具</span>
-                        <span class="tag tag-new">新</span>
+                        <span class="tag tag-can">CAN总线</span><span class="tag tag-engineering">工程工具</span><span class="tag tag-new">新</span>
                     </div>
                     <h3>CAN busoff分析工具</h3>
                     <p class="tool-description">
@@ -520,25 +500,6 @@
                         </a>
                         <button class="btn btn-secondary" onclick="showDetails('tool5')">
                             <i class="fas fa-info-circle"></i> 详细说明
-                        </button>
-                    </div>
-                </div>
-
-                <!-- 预留工具卡片2 -->
-                <div class="tool-card card-4">
-                    <div class="card-icon">
-                        <i class="fas fa-plus-circle"></i>
-                    </div>
-                    <div class="tool-tags">
-                        <span class="tag tag-new">即将上线</span>
-                    </div>
-                    <h3>正则表达式测试器</h3>
-                    <p class="tool-description">
-                        可视化正则表达式编辑和测试工具，实时匹配高亮、分组捕获、替换预览、常用模式库。支持 JavaScript、Python、PHP 等多种正则语法。
-                    </p>
-                    <div class="card-actions">
-                        <button class="btn btn-secondary" style="width: 100%;" onclick="comingSoon()">
-                            <i class="fas fa-clock"></i> 开发中
                         </button>
                     </div>
                 </div>
@@ -605,7 +566,7 @@
                 weekday: 'short'
             });
             const timeStr = now.toLocaleTimeString('zh-CN');
-            document.getElementById('current-time').textContent = `${dateStr} ${timeStr}`;
+            document.getElementById('current-time').textContent = dateStr + ' ' + timeStr;
         }
 
         // 获取服务器IP地址
@@ -614,7 +575,7 @@
             fetch('https://api.ipify.org?format=json')
                 .then(response => response.json())
                 .then(data => {
-                    document.getElementById('server-ip').textContent = `服务器IP: ${data.ip}`;
+                    document.getElementById('server-ip').textContent = '服务器IP: ' + data.ip;
                 })
                 .catch(() => {
                     // 如果获取失败，显示局域网提示
@@ -629,113 +590,25 @@
             const content = document.getElementById('modal-content');
             
             let toolDetails = {
-                tool1: {
+                                tool1: {
                     title: '字节与位转换工具',
-                    content: `
-                        <h4>功能特点：</h4>
-                        <ul style="margin: 10px 0 20px 20px; line-height: 1.6;">
-                            <li>支持两种CAN总线信号描述方式的相互转换：字节与位描述、起始位与位长度描述</li>
-                            <li>可视化选择字节(0-7)和位(0-7)，支持单击和拖选操作</li>
-                            <li>可自定义字节和位的起始值（0起始或1起始）</li>
-                            <li>自动验证输入规则，防止信号跨字节错误</li>
-                            <li>实时生成位读取代码，包括掩码定义和读取操作</li>
-                        </ul>
-                        <h4>使用场景：</h4>
-                        <p>CAN总线信号定义、嵌入式开发、汽车电子、通信协议设计、硬件寄存器配置等。</p>
-                        <h4>描述方式说明：</h4>
-                        <ul style="margin: 10px 0 20px 20px; line-height: 1.6;">
-                            <li><strong>方式1：字节与位描述</strong> - 例如："1字节,3位"、"2字节,5-6位"、"7字节,all"</li>
-                            <li><strong>方式2：起始位与位长度描述</strong> - 例如："起始位22,长度2"（起始位从0开始）</li>
-                        </ul>
-                    `
+                    content: `<h4>功能特点：</h4>\n                <ul style="margin: 10px 0 20px 20px; line-height: 1.6;">\n                    <li>支持两种CAN总线信号描述方式的相互转换：字节与位描述、起始位与位长度描述</li><li>可视化选择字节(0-7)和位(0-7)，支持单击和拖选操作</li><li>可自定义字节和位的起始值（0起始或1起始）</li><li>自动验证输入规则，防止信号跨字节错误</li><li>实时生成位读取代码，包括掩码定义和读取操作</li>\n                </ul><h4>使用场景：</h4>\n                <p>CAN总线信号定义、嵌入式开发、汽车电子、通信协议设计、硬件寄存器配置等。</p><h4>补充说明：</h4>\n                <p>描述方式说明：<br><strong>方式1：字节与位描述</strong> - 例如："1字节,3位"、"2字节,5-6位"、"7字节,all"<br><strong>方式2：起始位与位长度描述</strong> - 例如："起始位22,长度2"（起始位从0开始）</p>`
                 },
                 tool2: {
                     title: 'CyberChef 工具箱',
-                    content: `
-                        <h4>功能特点：</h4>
-                        <ul style="margin: 10px 0 20px 20px; line-height: 1.6;">
-                            <li>支持 300+ 种数据操作和转换功能</li>
-                            <li>编码/解码：Base64、Hex、URL、HTML 等</li>
-                            <li>加密/解密：AES、DES、RSA、RC4 等</li>
-                            <li>哈希计算：MD5、SHA1、SHA256、SHA512 等</li>
-                            <li>数据解析：JSON、XML、CSV、正则表达式</li>
-                            <li>压缩/解压缩：Gzip、Zlib、Brotli 等</li>
-                            <li>完全离线版本 v10.8.2，无需联网</li>
-                        </ul>
-                        <h4>适用人群：</h4>
-                        <p>网络安全工程师、开发人员、数据分析师、CTF选手、渗透测试人员。</p>
-                        <h4>注意：</h4>
-                        <p style="color: var(--warning-color); font-weight: bold;">此工具为离线版本，部分在线功能（如获取远程资源）不可用。</p>
-                    `
+                    content: `<h4>功能特点：</h4>\n                <ul style="margin: 10px 0 20px 20px; line-height: 1.6;">\n                    <li>支持 300+ 种数据操作和转换功能</li><li>编码/解码：Base64、Hex、URL、HTML 等</li><li>加密/解密：AES、DES、RSA、RC4 等</li><li>哈希计算：MD5、SHA1、SHA256、SHA512 等</li><li>数据解析：JSON、XML、CSV、正则表达式</li><li>压缩/解压缩：Gzip、Zlib、Brotli 等</li><li>完全离线版本 v10.8.2，无需联网</li>\n                </ul><h4>使用场景：</h4>\n                <p>网络安全工程师、开发人员、数据分析师、CTF选手、渗透测试人员。</p><h4>补充说明：</h4>\n                <p>注意：此工具为离线版本，部分在线功能（如获取远程资源）不可用。</p>`
                 },
                 tool3: {
                     title: 'X6000发动机水温报警点配置',
-                    content: `
-                        <h4>功能特点：</h4>
-                        <ul style="margin: 10px 0 20px 20px; line-height: 1.6;">
-                            <li>支持X6000系列发动机参数配置生成</li>
-                            <li>发动机编号、转速绿区/红区范围配置</li>
-                            <li>机油压力报警点选择（120kPa/60kPa）</li>
-                            <li>机油压力类型选择（气体机和康明斯/潍柴和玉柴柴油机）</li>
-                            <li>水温过高报警值选择（8种预设值）</li>
-                            <li>燃油类型选择（7种类型）</li>
-                            <li>实时生成标准格式配置代码</li>
-                            <li>一键复制配置代码功能</li>
-                            <li>完全离线运行，数据安全</li>
-                        </ul>
-                        <h4>输出格式：</h4>
-                        <p style="font-family: monospace; background: #f1f5f9; padding: 10px; border-radius: 4px;">
-                            { 发动机编号 , 绿区起始 , 红区起始 , 0x参数1 , 0x参数2 } ,
-                        </p>
-                        <h4>参数计算：</h4>
-                        <p>参数1 = (绿区宽度索引 << 4) | 红区宽度索引<br>
-                        参数2 = 加权计算公式结果</p>
-                        <h4>使用场景：</h4>
-                        <p>东风X6000系列发动机仪表盘报警参数配置、售后维护、研发测试。</p>
-                    `
+                    content: `<h4>功能特点：</h4>\n                <ul style="margin: 10px 0 20px 20px; line-height: 1.6;">\n                    <li>支持X6000系列发动机参数配置生成</li><li>发动机编号、转速绿区/红区范围配置</li><li>机油压力报警点选择（120kPa/60kPa）</li><li>机油压力类型选择（气体机和康明斯/潍柴和玉柴柴油机）</li><li>水温过高报警值选择（8种预设值）</li><li>燃油类型选择（7种类型）</li><li>实时生成标准格式配置代码</li><li>一键复制配置代码功能</li><li>完全离线运行，数据安全</li>\n                </ul><h4>使用场景：</h4>\n                <p>东风X6000系列发动机仪表盘报警参数配置、售后维护、研发测试。</p><h4>补充说明：</h4>\n                <p>输出格式：<code style="font-family: monospace; background: #f1f5f9; padding: 5px; border-radius: 4px;">{ 发动机编号 , 绿区起始 , 红区起始 , 0x参数1 , 0x参数2 } ,</code><br><br>参数计算：<br>参数1 = (绿区宽度索引 << 4) | 红区宽度索引<br>参数2 = 加权计算公式结果</p>`
                 },
                 tool4: {
                     title: '字符串处理工具',
-                    content: `
-                        <h4>功能特点：</h4>
-                        <ul style="margin: 10px 0 20px 20px; line-height: 1.6;">
-                            <li>文本与十六进制相互转换</li>
-                            <li>计算校验和、异或值、取反值</li>
-                            <li>自定义分隔符和前缀</li>
-                            <li>设置每行字节数和填充对齐</li>
-                            <li>自动格式化输出结果</li>
-                            <li>完全离线运行，数据安全</li>
-                        </ul>
-                    `
+                    content: `<h4>功能特点：</h4>\n                <ul style="margin: 10px 0 20px 20px; line-height: 1.6;">\n                    <li>文本与十六进制相互转换</li><li>计算校验和、异或值、取反值</li><li>自定义分隔符和前缀</li><li>设置每行字节数和填充对齐</li><li>自动格式化输出结果</li><li>完全离线运行，数据安全</li>\n                </ul><h4>使用场景：</h4>\n                <p>文本处理、数据转换、校验和计算、数据格式调整等开发场景。</p>`
                 },
                 tool5: {
                     title: 'CAN busoff分析工具',
-                    content: `
-                        <h4>功能特点：</h4>
-                        <ul style="margin: 10px 0 20px 20px; line-height: 1.6;">
-                            <li>实时分析CAN总线错误日志</li>
-                            <li>自动识别busoff恢复事件</li>
-                            <li>检测快恢复（45-70ms）和慢恢复（180-220ms）</li>
-                            <li>在日志中高亮标记错误恢复行</li>
-                            <li>自动统计恢复事件数量</li>
-                            <li>计算重试帧数（自动+1）</li>
-                            <li>支持大容量日志分析</li>
-                            <li>完全离线运行，数据安全</li>
-                        </ul>
-                        <h4>输入格式：</h4>
-                        <p>支持标准CAN分析仪日志格式，如：<br>
-                        <code style="font-family: monospace; font-size: 0.9rem;">[+] 0.051020   CAN 1   RxErr  ECC: 100000101xxxxx, Stuff Error, Bit Position = 42</code></p>
-                        <h4>使用场景：</h4>
-                        <p>CAN总线故障诊断、网络通信分析、ECU开发测试、汽车电子调试。</p>
-                        <h4>分析规则：</h4>
-                        <ul style="margin: 10px 0 20px 20px; line-height: 1.6;">
-                            <li>时间间隔>1ms：判断为busoff恢复尝试</li>
-                            <li>45-70ms：快恢复（自动标记为蓝色）</li>
-                            <li>180-220ms：慢恢复（自动标记为蓝色）</li>
-                            <li>其他时间：异常恢复（自动标记为红色）</li>
-                            <li>重试帧数自动+1（包含首帧）</li>
-                        </ul>
-                    `
+                    content: `<h4>功能特点：</h4>\n                <ul style="margin: 10px 0 20px 20px; line-height: 1.6;">\n                    <li>实时分析CAN总线错误日志</li><li>自动识别busoff恢复事件</li><li>检测快恢复（45-70ms）和慢恢复（180-220ms）</li><li>在日志中高亮标记错误恢复行</li><li>自动统计恢复事件数量</li><li>计算重试帧数（自动+1）</li><li>支持大容量日志分析</li><li>完全离线运行，数据安全</li>\n                </ul><h4>使用场景：</h4>\n                <p>CAN总线故障诊断、网络通信分析、ECU开发测试、汽车电子调试。</p><h4>补充说明：</h4>\n                <p>输入格式：支持标准CAN分析仪日志格式<br>分析规则：<br>• 时间间隔>1ms：判断为busoff恢复尝试<br>• 45-70ms：快恢复（自动标记为蓝色）<br>• 180-220ms：慢恢复（自动标记为蓝色）<br>• 其他时间：异常恢复（自动标记为红色）<br>• 重试帧数自动+1（包含首帧）</p>`
                 }
             };
             
@@ -749,11 +622,6 @@
         // 关闭模态框
         function closeModal() {
             document.getElementById('details-modal').style.display = 'none';
-        }
-
-        // 开发中提示
-        function comingSoon() {
-            alert('🚧 此功能正在开发中，敬请期待！');
         }
 
         // 页面加载完成后执行
@@ -774,37 +642,6 @@
                     }
                 });
             });
-            
-            // 添加键盘快捷键
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') closeModal();
-                if (e.key === '1' && e.altKey) {
-                    window.location.href = '字节与位转换工具.html';
-                }
-                if (e.key === '2' && e.altKey) {
-                    window.location.href = 'CyberChef_v10.8.2/CyberChef_v10.8.2.html';
-                }
-                if (e.key === '3' && e.altKey) {
-                    window.location.href = 'X6000发动机水温报警点.html';
-                }
-                if (e.key === '4' && e.altKey) {
-                    window.location.href = '字符串处理工具.html';
-                }
-                if (e.key === '5' && e.altKey) {
-                    window.location.href = 'CAN busoff分析 .html';
-                }
-            });
-            
-            // 显示键盘快捷键提示
-            setTimeout(() => {
-                console.log('📢 快捷键提示：');
-                console.log('Alt+1: 打开字节转换工具');
-                console.log('Alt+2: 打开CyberChef工具');
-                console.log('Alt+3: 打开发动机水温报警点配置工具');
-                console.log('Alt+4: 打开字符串处理工具');
-                console.log('Alt+5: 打开CAN busoff分析工具');
-                console.log('Esc: 关闭对话框');
-            }, 1000);
         });
 
         // 点击模态框外部关闭
@@ -840,6 +677,13 @@
                     font-size: 1rem;
                 }
             }
+            
+            /* 卡片动画延迟 */
+            .tool-card:nth-child(1) { animation-delay: 0.1s; }
+            .tool-card:nth-child(2) { animation-delay: 0.2s; }
+            .tool-card:nth-child(3) { animation-delay: 0.30000000000000004s; }
+            .tool-card:nth-child(4) { animation-delay: 0.4s; }
+            .tool-card:nth-child(5) { animation-delay: 0.5s; }
         `;
         document.head.appendChild(style);
     </script>
