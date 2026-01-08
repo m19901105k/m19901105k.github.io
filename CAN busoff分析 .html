@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAN总线错误分析工具</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+
+body{
+    font-family:'Segoe UI','Microsoft YaHei',sans-serif;
+    background:#f5f7fa;
+    padding:20px;
+    height:100vh;
+    overflow:hidden;
+}
+
+.container{
+    display:flex;
+    gap:20px;
+    height:calc(100% - 60px);
+}
+
+.input-section{flex:2}
+.output-section{flex:1}
+
+.panel{
+    background:#fff;
+    border-radius:10px;
+    box-shadow:0 5px 15px rgba(0,0,0,.08);
+    height:100%;
+    display:flex;
+    flex-direction:column;
+}
+
+.panel-header{
+    background:#3498db;
+    color:#fff;
+    padding:15px 20px;
+    font-size:18px;
+    font-weight:bold;
+}
+
+.panel-body{
+    flex:1;
+    padding:20px;
+    overflow:hidden;
+    display:flex;
+}
+
+/* ===== 左侧日志区 ===== */
+.log-wrapper{
+    display:flex;
+    width:100%;
+    position:relative;
+}
+
+.line-numbers,
+.log-highlight,
+.log-input{
+    font-family:Consolas,"Courier New",monospace;
+    font-size:12px;
+    line-height:1.5;
+}
+
+.line-numbers{
+    width:60px;
+    background:#f8f9fa;
+    border-right:1px solid #ddd;
+    padding:10px 5px;
+    text-align:right;
+    color:#6c757d;
+    white-space:pre;
+    user-select:none;
+    overflow:hidden;
+}
+.line-numbers::-webkit-scrollbar{display:none}
+
+.log-highlight{
+    position:absolute;
+    left:60px;
+    right:0;
+    top:0;
+    bottom:0;
+    padding:10px;
+    white-space:pre;
+    overflow-y:auto;
+    pointer-events:none;
+}
+
+/* 去掉底纹，只保留选中行 */
+.log-highlight .fast,
+.log-highlight .slow,
+.log-highlight .abnormal{
+    background:transparent;
+}
+
+.log-highlight .active{
+    outline:2px solid #ff9800;
+    background:rgba(255,152,0,0.08);
+}
+
+.log-input{
+    position:absolute;
+    left:60px;
+    right:0;
+    top:0;
+    bottom:0;
+    padding:10px;
+    border:none;
+    outline:none;
+    resize:none;
+    background:transparent;
+    color:transparent;
+    caret-color:#000;
+}
+
+/* ===== 右侧 ===== */
+.stats-top{
+    display:flex;
+    gap:10px;
+    margin-bottom:15px;
+}
+
+.stat-box{
+    flex:1;
+    background:#f8f9fa;
+    border-radius:6px;
+    text-align:center;
+    padding:12px;
+}
+
+.stat-box.fast{border-top:4px solid #4caf50}
+.stat-box.slow{border-top:4px solid #2196f3}
+.stat-box.abnormal{border-top:4px solid #f44336}
+
+.stat-label{
+    font-size:18px;
+    font-weight:700;
+    color:#333;
+    margin-bottom:4px;
+}
+
+.stat-value{
+    font-size:28px;
+    font-weight:bold;
+    font-family:Consolas,monospace;
+}
+
+.results{
+    flex:1;
+    overflow-y:auto;
+    background:#f8f9fa;
+    padding:10px;
+    border-radius:6px;
+}
+
+.result-item{
+    background:#fff;
+    padding:10px;
+    margin-bottom:10px;
+    border-radius:4px;
+    font-family:Consolas,monospace;
+    cursor:pointer;
+}
+
+.fast-recovery{border-left:4px solid #4caf50}
+.slow-recovery{border-left:4px solid #2196f3}
+.abnormal-recovery{border-left:4px solid #f44336}
+
+.footer{
+    text-align:center;
+    margin-top:20px;
+    font-size:12px;
+    color:#777;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<div class="input-section">
+<div class="panel">
+<div class="panel-header">输入日志</div>
+<div class="panel-body">
+<div class="log-wrapper">
+<div id="lineNumbers" class="line-numbers">1</div>
+<div id="logHighlight" class="log-highlight"></div>
+<textarea id="logInput" class="log-input" spellcheck="false"
+placeholder="粘贴 CAN 日志..."></textarea>
+</div>
+</div>
+</div>
+</div>
+
+<div class="output-section">
+<div class="panel">
+<div class="panel-header">分析结果</div>
+<div class="panel-body" style="flex-direction:column;">
+
+<div class="stats-top">
+<div class="stat-box fast">
+<div class="stat-label">快恢复</div>
+<div id="fastCnt" class="stat-value">0</div>
+</div>
+<div class="stat-box slow">
+<div class="stat-label">慢恢复</div>
+<div id="slowCnt" class="stat-value">0</div>
+</div>
+<div class="stat-box abnormal">
+<div class="stat-label">异常恢复</div>
+<div id="abnCnt" class="stat-value">0</div>
+</div>
+</div>
+
+<div id="results" class="results"></div>
+
+</div>
+</div>
+</div>
+</div>
+
+<div class="footer">© 2025 东风电驱动开发工具箱 | 孟柯</div>
+
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+
+const input=document.getElementById('logInput');
+const highlight=document.getElementById('logHighlight');
+const linesEl=document.getElementById('lineNumbers');
+const results=document.getElementById('results');
+
+const fastCnt=document.getElementById('fastCnt');
+const slowCnt=document.getElementById('slowCnt');
+const abnCnt=document.getElementById('abnCnt');
+
+const REG=/\[\+\]\s+([\d.]+)/;
+const LINE_HEIGHT=18; // 12px * 1.5
+
+function debounce(fn,d=300){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),d);};}
+
+function classify(ms){
+if(ms>=45&&ms<=70) return 'fast';
+if(ms>=180&&ms<=220) return 'slow';
+return 'abnormal';
+}
+
+function updateLines(){
+const n=input.value.split('\n').length;
+linesEl.textContent=Array.from({length:n},(_,i)=>i+1).join('\n');
+}
+
+function analyze(){
+const lines=input.value.split('\n');
+let cur=null,res=[],hl=[];
+let f=0,s=0,a=0;
+
+lines.forEach((l,i)=>{
+let cls='';
+if(l.includes('RxErr')){
+const m=REG.exec(l);
+if(m){
+const ms=parseFloat(m[1])*1000;
+if(ms>=1){
+if(cur) res.push(cur);
+cls=classify(ms);
+cur={type:cls,time:ms,retry:1,line:i};
+}else if(cur){
+cur.retry++;
+cls=cur.type;
+}
+}
+}
+hl.push(`<div class="${cls}" data-line="${i}">${l||' '}</div>`);
+});
+if(cur) res.push(cur);
+
+results.innerHTML='';
+res.forEach(r=>{
+if(r.type==='fast')f++;
+else if(r.type==='slow')s++;
+else a++;
+
+const div=document.createElement('div');
+div.className=`result-item ${r.type}-recovery`;
+div.innerHTML=`
+<strong>${r.type==='fast'?'快恢复':r.type==='slow'?'慢恢复':'异常恢复'}</strong><br>
+${r.time.toFixed(3)} ms<br>
+重试 ${r.retry} 帧
+`;
+div.onclick=()=>locate(r.line);
+results.appendChild(div);
+});
+
+fastCnt.textContent=f;
+slowCnt.textContent=s;
+abnCnt.textContent=a;
+
+highlight.innerHTML=hl.join('');
+}
+
+function locate(line){
+document.querySelectorAll('.log-highlight .active')
+.forEach(e=>e.classList.remove('active'));
+
+const el=highlight.children[line];
+if(!el)return;
+
+el.classList.add('active');
+
+const containerHeight=input.clientHeight;
+const targetTop=line*LINE_HEIGHT - containerHeight/2;
+
+const maxScroll=input.scrollHeight - containerHeight;
+const scroll=Math.max(0,Math.min(targetTop,maxScroll));
+
+input.scrollTop=highlight.scrollTop=linesEl.scrollTop=scroll;
+}
+
+const run=debounce(analyze);
+
+input.addEventListener('input',()=>{updateLines();run();});
+input.addEventListener('scroll',()=>{
+highlight.scrollTop=input.scrollTop;
+linesEl.scrollTop=input.scrollTop;
+});
+
+updateLines();
+});
+</script>
+
+</body>
+</html>
