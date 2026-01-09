@@ -188,7 +188,7 @@ body{
 <div class="log-wrapper">
 <div id="lineNumbers" class="line-numbers">1</div>
 <div id="logHighlight" class="log-highlight"></div>
-<textarea id="logInput" class="log-input" spellcheck="false"
+<textarea id="logInput" class="log-input" wrap="off" spellcheck="false"
 placeholder="粘贴 CAN 日志..."></textarea>
 </div>
 </div>
@@ -324,6 +324,7 @@ const run=debounce(analyze);
 input.addEventListener('input',()=>{updateLines();run();});
 input.addEventListener('scroll',()=>{
 highlight.scrollTop=input.scrollTop;
+highlight.scrollLeft=input.scrollLeft;
 linesEl.scrollTop=input.scrollTop;
 });
 
