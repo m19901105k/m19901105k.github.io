@@ -377,7 +377,7 @@
             const bitWeights = [128, 64, 8, 1];
             
             // 公式1: REPT(" ",4-LEN(B1))
-            const spaces = " ".repeat(4 - engineNum.length);
+            const spaces = " ".repeat(3 - engineNum.length);
             
             // 公式2: MATCH(C2-B2,$H$1:$H$12,0)-1
             const greenRangeIndex = findIndex(rpmRanges, greenZoneWidth);
@@ -408,8 +408,6 @@
         function copyToClipboard() {
             const result = document.getElementById('result');
             navigator.clipboard.writeText(result.textContent)
-                .then(() => alert('配置代码已复制到剪贴板'))
-                .catch(err => console.error('复制失败: ', err));
         }
         
         // 为所有输入元素添加输入监听
