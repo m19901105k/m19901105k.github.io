@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>全息指挥台 | 3D 模型交互</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#060c1a;--cyan:#00f0ff;--green:#00ff88;--magenta:#ff00e5;--yellow:#f0ff00;--red:#ff3355;--panel:rgba(6,12,30,.94);--border:rgba(0,240,255,.16);--glow:0 0 8px rgba(0,240,255,.3)}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:'Noto Sans SC','Share Tech Mono',sans-serif;color:var(--cyan);cursor:none}
+video{display:none}
+#threeC{position:fixed;top:0;left:240px;right:0;bottom:0;z-index:1}
+#handC{position:fixed;inset:0;z-index:50;pointer-events:none}
+#scan{position:fixed;inset:0;z-index:2;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,240,255,.008) 2px,rgba(0,240,255,.008) 4px)}
+
+/* Left Panel */
+#LP{position:fixed;top:0;left:0;width:240px;height:100%;z-index:30;background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;backdrop-filter:blur(16px)}
+.lh{padding:20px 14px 10px;border-bottom:1px solid var(--border)}
+.lh h2{font-family:'Orbitron',sans-serif;font-size:.72rem;letter-spacing:.18em;text-shadow:var(--glow)}
+.lh p{font-size:.55rem;color:rgba(0,240,255,.35);margin-top:3px;letter-spacing:.06em}
+.lg{flex:1;padding:10px;overflow-y:auto;display:grid;grid-template-columns:1fr 1fr;gap:8px;align-content:start}
+.mc{background:rgba(0,240,255,.02);border:1px solid rgba(0,240,255,.08);border-radius:4px;padding:6px 4px 8px;cursor:pointer;transition:all .25s;display:flex;flex-direction:column;align-items:center}
+.mc.on{border-color:var(--green);background:rgba(0,255,136,.06);box-shadow:0 0 20px rgba(0,255,136,.12),inset 0 0 15px rgba(0,255,136,.04)}
+.mc.hp{border-color:var(--yellow);background:rgba(240,255,0,.04);box-shadow:0 0 14px rgba(240,255,0,.1)}
+.tc{width:94px;height:78px;display:block}
+.mn{font-size:.65rem;margin-top:5px;letter-spacing:.08em;color:rgba(0,240,255,.55);transition:color .2s;text-align:center}
+.mc.on .mn{color:var(--green)}.mc.hp .mn{color:var(--yellow)}
+.li{padding:10px 14px;border-top:1px solid var(--border);font-size:.55rem;line-height:1.7;color:rgba(0,240,255,.4)}
+.li b{color:var(--cyan);font-weight:400;text-shadow:var(--glow)}
+
+/* HUD */
+.ht{position:fixed;top:10px;left:252px;right:12px;z-index:40;display:flex;justify-content:space-between;pointer-events:none}
+.htl{font-family:'Orbitron',sans-serif;font-size:.65rem;letter-spacing:.14em;text-shadow:var(--glow)}
+.htr{text-align:right;font-size:.65rem}
+.htr .tm{font-family:'Orbitron',sans-serif;font-size:.8rem;text-shadow:var(--glow)}
+.hb{position:fixed;bottom:0;left:240px;right:0;z-index:40;padding:8px 16px;display:flex;justify-content:space-between;background:linear-gradient(transparent,rgba(6,12,26,.92));font-size:.55rem;pointer-events:none}
+.hbs{color:rgba(0,240,255,.35)}.hbg{color:var(--green)}
+
+/* Gesture guide */
+#GR{position:fixed;right:14px;top:50%;transform:translateY(-50%);z-index:40;pointer-events:none;background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:10px 12px;backdrop-filter:blur(8px);width:155px}
+.grt{font-family:'Orbitron',sans-serif;font-size:.5rem;letter-spacing:.1em;margin-bottom:7px;padding-bottom:5px;border-bottom:1px solid var(--border);text-shadow:var(--glow)}
+.gi{display:flex;align-items:center;gap:6px;margin-bottom:5px;font-size:.55rem;color:rgba(0,240,255,.4);transition:color .2s}
+.gi.on{color:var(--green)}.gi b{font-weight:400}
+.gn{position:fixed;top:52px;left:252px;z-index:40;pointer-events:none;font-family:'Orbitron',sans-serif;font-size:1.3rem;letter-spacing:.08em;color:rgba(0,240,255,.1)}
+</style>
+</head>
+<body>
+<video id="v" playsinline></video>
+<canvas id="threeC"></canvas>
+<div id="scan"></div>
+<canvas id="handC"></canvas>
+
+<div id="LP">
+  <div class="lh"><h2>3D 模型库</h2><p>HOLOGRAPHIC MODEL CATALOG</p></div>
+  <div class="lg" id="grid"></div>
+  <div class="li">
+    模型: <b id="infoN">--</b><br>
+    顶点: <b id="infoV">--</b> | 旋转: <b id="infoR">0,0</b><br>
+    缩放: <b id="infoZ">100%</b>
+  </div>
+</div>
+
+<div class="ht">
+  <div class="htl">全息指挥台 — 模型交互</div>
+  <div class="htr"><div class="tm" id="hTm">00:00:00</div><div id="hFp">-- FPS</div></div>
+</div>
+<div id="GN">立方体</div>
+<div id="GR">
+  <div class="grt">手势指南</div>
+  <div class="gi" id="g0"><b>食指指向</b> 光标</div>
+  <div class="gi" id="g1"><b>捏合选择</b> 点击</div>
+  <div class="gi" id="g2"><b>捏合拖动</b> 旋转</div>
+  <div class="gi" id="g3"><b>张开手掌</b> 缩放</div>
+  <div class="gi" id="g4"><b>握拳</b> 重置</div>
+</div>
+<div class="hb">
+  <div class="hbs">SYS ONLINE | TRACKING ACTIVE</div>
+  <div class="hbg" id="hGt">&gt;&gt; 等待手势输入...</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/hands.js" crossorigin="anonymous"></script>
+<script>
+/* ═══════════════════════════════════════
+   CONFIG & STATE
+   ═══════════════════════════════════════ */
+const MODELS = [
+  { name:'立方体', color:'#00f0ff', geo:()=> new THREE.BoxGeometry(1.4,1.4,1.4) },
+  { name:'星球',   color:'#00ff88', geo:()=> new THREE.SphereGeometry(1,20,14) },
+  { name:'星环',   color:'#ff00e5', geo:()=> new THREE.TorusGeometry(.8,.32,14,36) },
+  { name:'金字塔', color:'#f0ff00', geo:()=> new THREE.ConeGeometry(.9,1.6,4) },
+  { name:'宝石',   color:'#ff6644', geo:()=> new THREE.OctahedronGeometry(1.05) },
+  { name:'螺旋结', color:'#44ccff', geo:()=> new THREE.TorusKnotGeometry(.65,.22,80,10) },
+  { name:'棱柱',   color:'#ff44aa', geo:()=> new THREE.CylinderGeometry(.75,.75,1.4,6) },
+  { name:'钻石',   color:'#ffdd00', geo:()=> new THREE.IcosahedronGeometry(1,1) },
+];
+
+let sel = 0, camZ = 4, tRotY = 0, tRotX = 0;
+let mGroup, mMesh, mEdge, mScale = 0, tScale = 1, mBloom;
+let thumbs = [], thumbAng = 0;
+
+/* ═══════════════════════════════════════
+   THREE.JS SCENE
+   ═══════════════════════════════════════ */
+const threeC = document.getElementById('threeC');
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x060c1a);
+const cam = new THREE.PerspectiveCamera(48, 1, .1, 100);
+cam.position.set(0, 0, camZ);
+const renderer = new THREE.WebGLRenderer({ canvas: threeC, antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+
+scene.add(new THREE.AmbientLight(0x223344, .6));
+const pLight = new THREE.PointLight(0x00f0ff, 1.2, 20);
+pLight.position.set(3, 4, 5);
+scene.add(pLight);
+const pLight2 = new THREE.PointLight(0x6622ff, .5, 15);
+pLight2.position.set(-4, -2, 3);
+scene.add(pLight2);
+
+// Particles
+const pCount = 300;
+const pGeo = new THREE.BufferGeometry();
+const pPos = new Float32Array(pCount * 3);
+for (let i = 0; i < pCount; i++) {
+  pPos[i*3]   = (Math.random()-.5)*14;
+  pPos[i*3+1] = (Math.random()-.5)*14;
+  pPos[i*3+2] = (Math.random()-.5)*14;
+}
+pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+scene.add(new THREE.Points(pGeo, new THREE.PointsMaterial({ color:0x00f0ff, size:.025, transparent:true, opacity:.25 })));
+
+// Platform ring
+const rGeo = new THREE.RingGeometry(1.6, 1.65, 80);
+const rMat = new THREE.MeshBasicMaterial({ color:0x00f0ff, transparent:true, opacity:.08, side:THREE.DoubleSide });
+const ring = new THREE.Mesh(rGeo, rMat);
+ring.rotation.x = -Math.PI / 2;
+ring.position.y = -1.35;
+scene.add(ring);
+
+// Ring 2
+const r2 = new THREE.Mesh(new THREE.RingGeometry(1.2, 1.22, 60), rMat.clone());
+r2.material.opacity = .05;
+r2.rotation.x = -Math.PI / 2;
+r2.position.y = -1.35;
+scene.add(r2);
+
+mGroup = new THREE.Group();
+scene.add(mGroup);
+
+function resize() {
+  const w = innerWidth - 240, h = innerHeight;
+  renderer.setSize(w, h);
+  cam.aspect = w / h;
+  cam.updateProjectionMatrix();
+  const hc = document.getElementById('handC');
+  hc.width = innerWidth; hc.height = innerHeight;
+}
+addEventListener('resize', resize);
+resize();
+
+/* ═══════════════════════════════════════
+   BUILD 3D MODEL
+   ═══════════════════════════════════════ */
+function buildModel(idx) {
+  while (mGroup.children.length) mGroup.remove(mGroup.children[0]);
+  const m = MODELS[idx];
+  const geo = m.geo();
+  const mat = new THREE.MeshPhongMaterial({
+    color:m.color, emissive:m.color, emissiveIntensity:.25,
+    transparent:true, opacity:.1, side:THREE.DoubleSide, depthWrite:false
+  });
+  mMesh = new THREE.Mesh(geo, mat);
+  mGroup.add(mMesh);
+  const eGeo = new THREE.EdgesGeometry(geo);
+  const eMat = new THREE.LineBasicMaterial({ color:m.color, transparent:true, opacity:.75 });
+  mEdge = new THREE.LineSegments(eGeo, eMat);
+  mGroup.add(mEdge);
+  // Bloom halo
+  const hMat = new THREE.MeshBasicMaterial({ color:m.color, transparent:true, opacity:.04, side:THREE.BackSide });
+  mBloom = new THREE.Mesh(geo.clone(), hMat);
+  mBloom.scale.setScalar(1.15);
+  mGroup.add(mBloom);
+  // Reset
+  tRotY = 0; tRotX = 0; mGroup.rotation.set(0,0,0);
+  mScale = 0; tScale = 1;
+  // UI
+  const verts = geo.attributes.position.count;
+  document.getElementById('infoN').textContent = m.name;
+  document.getElementById('infoV').textContent = verts;
+  document.getElementById('GN').textContent = m.name;
+  document.getElementById('GN').style.color = m.color;
+}
+
+/* ═══════════════════════════════════════
+   THUMBNAILS (Canvas 2D wireframes)
+   ═══════════════════════════════════════ */
+function extractEdges(geo) {
+  const eg = new THREE.EdgesGeometry(geo);
+  const a = eg.attributes.position.array, lines = [];
+  for (let i = 0; i < a.length; i += 6)
+    lines.push([[a[i],a[i+1],a[i+2]],[a[i+3],a[i+4],a[i+5]]]);
+  return lines;
+}
+
+function proj3(x, y, z, ry, rx) {
+  let c=Math.cos(ry),s=Math.sin(ry),x1=x*c-z*s,z1=x*s+z*c;
+  c=Math.cos(rx);s=Math.sin(rx);let y1=y*c-z1*s,z2=y*s+z1*c;
+  const d=2.5/(2.5+z2); return {x:x1*d,y:y1*d};
+}
+
+function drawThumb(ctx, lines, w, h, color, t) {
+  ctx.clearRect(0,0,w,h);
+  ctx.strokeStyle = color; ctx.lineWidth = 1;
+  const ry = t * .0008, rx = .35, sc = Math.min(w,h) * .32;
+  lines.forEach(l => {
+    const p1 = proj3(l[0][0],l[0][1],l[0][2],ry,rx);
+    const p2 = proj3(l[1][0],l[1][1],l[1][2],ry,rx);
+    ctx.globalAlpha = .55 + .2 * Math.sin(t * .001);
+    ctx.beginPath(); ctx.moveTo(w/2+p1.x*sc, h/2+p1.y*sc);
+    ctx.lineTo(w/2+p2.x*sc, h/2+p2.y*sc); ctx.stroke();
+  });
+}
+
+function initThumbs() {
+  const grid = document.getElementById('grid');
+  MODELS.forEach((m, i) => {
+    const card = document.createElement('div');
+    card.className = 'mc' + (i === 0 ? ' on' : '');
+    card.dataset.idx = i;
+    card.innerHTML = `<canvas class="tc" width="190" height="158"></canvas><div class="mn">${m.name}</div>`;
+    card.addEventListener('click', () => selectModel(i));
+    grid.appendChild(card);
+    thumbs.push({
+      ctx: card.querySelector('.tc').getContext('2d'),
+      lines: extractEdges(m.geo()),
+      color: m.color,
+      card
+    });
+  });
+}
+
+function updateThumbs(t) {
+  thumbs.forEach((th, i) => drawThumb(th.ctx, th.lines, 190, 158, th.color, t + i * 800));
+}
+
+/* ═══════════════════════════════════════
+   MODEL SELECTION
+   ═══════════════════════════════════════ */
+function selectModel(idx) {
+  if (idx === sel && mScale > .5) return;
+  document.querySelectorAll('.mc').forEach((c, i) => c.classList.toggle('on', i === idx));
+  sel = idx;
+  tScale = 0;
+  setTimeout(() => { buildModel(idx); tScale = 1; }, 180);
+}
+
+/* ═══════════════════════════════════════
+   HAND TRACKING
+   ═══════════════════════════════════════ */
+const hC = document.getElementById('handC');
+const hX = hC.getContext('2d');
+let hd = false, hlm = null, gesture = 'none', prevG = 'none';
+let curX = 0, curY = 0, prevPX = null, prevPY = null;
+let hoveredCard = -1, pinchJust = false, prevPinch = false;
+
+function fExt(l, i) {
+  if (i === 0) {
+    const pc = { x:(l[0].x+l[5].x+l[17].x)/3, y:(l[0].y+l[5].y+l[17].y)/3 };
+    return Math.hypot(l[4].x-pc.x,l[4].y-pc.y) > Math.hypot(l[2].x-pc.x,l[2].y-pc.y)*1.15;
+  }
+  return l[[0,8,12,16,20][i]].y < l[[0,6,10,14,18][i]].y;
+}
+
+function detG(l) {
+  const f = [fExt(l,0),fExt(l,1),fExt(l,2),fExt(l,3),fExt(l,4)];
+  const n = f.filter(Boolean).length;
+  const pinch = Math.hypot(l[4].x-l[8].x, l[4].y-l[8].y) < .065;
+  if (pinch) return 'pinch';
+  if (f[1] && n <= 2) return 'point';
+  if (n >= 4 && f[1] && f[2]) return 'palm';
+  if (n === 0) return 'fist';
+  return 'other';
+}
+
+const G_NAMES = { none:'等待输入', point:'光标控制', pinch:'选择/旋转', palm:'缩放控制', fist:'重置视角', other:'识别中' };
+const G_IDS = { point:0, pinch:1, palm:3, fist:4 };
+
+function onResults(r) {
+  if (r.multiHandLandmarks && r.multiHandLandmarks.length) {
+    hlm = r.multiHandLandmarks[0]; hd = true;
+    curX = (1 - hlm[8].x) * innerWidth;
+    curY = hlm[8].y * innerHeight;
+    const ng = detG(hlm);
+    pinchJust = (ng === 'pinch' && prevPinch === false);
+    prevPinch = (ng === 'pinch');
+    if (ng !== gesture) { prevG = gesture; gesture = ng; onGChange(prevG, ng); }
+  } else {
+    hd = false; hlm = null; prevPinch = false;
+    if (gesture !== 'none') { prevG = gesture; gesture = 'none'; onGChange(prevG, 'none'); }
+  }
+}
+
+function onGChange(from, to) {
+  document.getElementById('hGt').textContent = '>> ' + G_NAMES[to];
+  Object.keys(G_IDS).forEach(k => document.getElementById('g'+G_IDS[k]).classList.toggle('on', k === to));
+  if (to === 'fist') { tRotY = 0; tRotX = 0; camZ = 4; }
+}
+
+/* ═══════════════════════════════════════
+   INTERACTION
+   ═══════════════════════════════════════ */
+let prevDragX = null, prevDragY = null;
+let prevZoomY = null;
+
+function processInteraction() {
+  hoveredCard = -1;
+  if (!hd) { prevDragX = prevDragY = prevZoomY = null; return; }
+
+  // Check card hover
+  document.querySelectorAll('.mc').forEach((c, i) => {
+    const r = c.getBoundingClientRect();
+    const on = curX >= r.left && curX <= r.right && curY >= r.top && curY <= r.bottom;
+    c.classList.toggle('hp', on && gesture === 'point');
+    if (on) hoveredCard = i;
+  });
+
+  if (gesture === 'pinch') {
+    prevZoomY = null;
+    // Click on card
+    if (pinchJust && hoveredCard >= 0) {
+      selectModel(hoveredCard);
+    }
+    // Rotate model (if cursor is in viewport area)
+    if (hoveredCard < 0 && curX > 240) {
+      if (prevDragX !== null) {
+        tRotY += (curX - prevDragX) * .006;
+        tRotX += (curY - prevDragY) * .004;
+        tRotX = Math.max(-1.2, Math.min(1.2, tRotX));
+      }
+      prevDragX = curX; prevDragY = curY;
+    }
+  } else {
+    prevDragX = prevDragY = null;
+  }
+
+  if (gesture === 'palm' && curX > 240) {
+    if (prevZoomY !== null) {
+      camZ = Math.max(1.8, Math.min(7, camZ + (curY - prevZoomY) * .008));
+    }
+    prevZoomY = curY;
+  } else {
+    prevZoomY = null;
+  }
+}
+
+/* ═══════════════════════════════════════
+   HAND OVERLAY DRAWING
+   ═══════════════════════════════════════ */
+const HC = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
+
+function drawHand() {
+  const W = hC.width, H = hC.height;
+  hX.clearRect(0, 0, W, H);
+  if (!hd || !hlm) return;
+
+  const gCol = { point:'#f0ff00', pinch:'#00ff88', palm:'#00f0ff', fist:'#ff3355', other:'#888' };
+  const col = gCol[gesture] || '#00f0ff';
+
+  // Connections
+  HC.forEach(([a, b]) => {
+    const ax = (1-hlm[a].x)*W, ay = hlm[a].y*H, bx = (1-hlm[b].x)*W, by = hlm[b].y*H;
+    hX.beginPath(); hX.moveTo(ax,ay); hX.lineTo(bx,by);
+    hX.strokeStyle = col + '30'; hX.lineWidth = 4; hX.lineCap = 'round'; hX.stroke();
+    hX.beginPath(); hX.moveTo(ax,ay); hX.lineTo(bx,by);
+    hX.strokeStyle = col + '90'; hX.lineWidth = 1.2; hX.stroke();
+  });
+
+  // Landmarks
+  hlm.forEach((p, i) => {
+    const x = (1-p.x)*W, y = p.y*H, tip = [4,8,12,16,20].includes(i);
+    hX.beginPath(); hX.arc(x, y, tip?7:4, 0, 6.28);
+    hX.fillStyle = col + (tip?'25':'10'); hX.fill();
+    hX.beginPath(); hX.arc(x, y, tip?2.5:1.5, 0, 6.28);
+    hX.fillStyle = tip ? col : col+'88'; hX.fill();
+  });
+
+  // Cursor
+  const cx = curX, cy = curY;
+  hX.beginPath(); hX.arc(cx, cy, 12, 0, 6.28);
+  hX.strokeStyle = col + '40'; hX.lineWidth = 1.5; hX.stroke();
+  hX.beginPath(); hX.arc(cx, cy, 4, 0, 6.28);
+  hX.fillStyle = col; hX.fill();
+  hX.shadowColor = col; hX.shadowBlur = 12;
+  hX.beginPath(); hX.arc(cx, cy, 3, 0, 6.28);
+  hX.fill(); hX.shadowBlur = 0;
+
+  // Pinch line
+  if (gesture === 'pinch') {
+    const tx = (1-hlm[4].x)*W, ty = hlm[4].y*H;
+    hX.beginPath(); hX.arc((tx+cx)/2, (ty+cy)/2, 18, 0, 6.28);
+    hX.strokeStyle = '#00ff8830'; hX.lineWidth = 1; hX.stroke();
+  }
+
+  // Palm direction line
+  if (gesture === 'palm') {
+    const px=(1-hlm[0].x)*W, py=hlm[0].y*H;
+    hX.beginPath(); hX.setLineDash([4,6]); hX.moveTo(px,py);
+    hX.lineTo(px, py - 60); hX.strokeStyle = '#00f0ff40'; hX.lineWidth = 1; hX.stroke();
+    hX.setLineDash([]);
+    // Zoom indicator
+    hX.font = '10px "Share Tech Mono"'; hX.fillStyle = '#00f0ff88';
+    hX.fillText('ZOOM', px + 10, py - 60);
+  }
+}
+
+/* ═══════════════════════════════════════
+   ANIMATION LOOP
+   ═══════════════════════════════════════ */
+let fc = 0, ft = performance.now(), fps = 0, fpc = 0;
+
+function animate() {
+  requestAnimationFrame(animate);
+  const now = performance.now();
+
+  // FPS
+  fpc++;
+  if (now - ft > 1000) { fps = fpc; fpc = 0; ft = now; }
+
+  // Interaction
+  processInteraction();
+
+  // Model scale lerp
+  mScale += (tScale - mScale) * .12;
+  mGroup.scale.setScalar(Math.max(0, mScale));
+
+  // Rotation lerp
+  mGroup.rotation.y += (tRotY - mGroup.rotation.y) * .08;
+  mGroup.rotation.x += (tRotX - mGroup.rotation.x) * .08;
+
+  // Idle rotation
+  if (gesture === 'none' || !hd) tRotY += .003;
+
+  // Floating
+  mGroup.position.y = Math.sin(now * .0012) * .08;
+
+  // Camera zoom
+  cam.position.z += (camZ - cam.position.z) * .08;
+
+  // Ring pulse
+  ring.material.opacity = .06 + .03 * Math.sin(now * .002);
+  ring.rotation.z = now * .0002;
+
+  // Material pulse
+  if (mMesh) {
+    mMesh.material.emissiveIntensity = .2 + .1 * Math.sin(now * .003);
+    mEdge.material.opacity = .65 + .15 * Math.sin(now * .004);
+  }
+
+  // Particles drift
+  const pp = pGeo.attributes.position.array;
+  for (let i = 1; i < pp.length; i += 3) {
+    pp[i] += .002;
+    if (pp[i] > 7) pp[i] = -7;
+  }
+  pGeo.attributes.position.needsUpdate = true;
+
+  renderer.render(scene, cam);
+  drawHand();
+
+  // Thumbnails
+  if (fc % 2 === 0) updateThumbs(now);
+
+  // HUD
+  if (fc % 10 === 0) {
+    document.getElementById('hTm').textContent = new Date().toTimeString().split(' ')[0];
+    document.getElementById('hFp').textContent = fps + ' FPS';
+    document.getElementById('infoR').textContent =
+      (mGroup.rotation.y * 57.3).toFixed(0) + ', ' + (mGroup.rotation.x * 57.3).toFixed(0);
+    document.getElementById('infoZ').textContent = Math.round(camZ / 4 * 100) + '%';
+  }
+
+  fc++;
+}
+
+/* ═══════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════ */
+async function init() {
+  initThumbs();
+  buildModel(0);
+
+  try {
+    const hands = new Hands({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}` });
+    hands.setOptions({ maxNumHands:1, modelComplexity:1, minDetectionConfidence:.7, minTrackingConfidence:.5 });
+    hands.onResults(onResults);
+
+    const stream = await navigator.mediaDevices.getUserMedia({ video:{ width:{ideal:1280}, height:{ideal:720}, facingMode:'user' } });
+    const v = document.getElementById('v');
+    v.srcObject = stream; await v.play();
+
+    const cam_ = new Camera(v, { onFrame: async () => { await hands.send({ image: v }); }, width:1280, height:720 });
+    await cam_.start();
+    document.getElementById('hGt').textContent = '>> 系统就绪 — 请展示手势';
+  } catch(e) {
+    document.getElementById('hGt').textContent = '>> 摄像头不可用: ' + e.message;
+    console.error(e);
+  }
+
+  animate();
+}
+
+init();
+</script>
+</body>
+</html>

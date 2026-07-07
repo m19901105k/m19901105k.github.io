@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>手势粒子魔法</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #08070e;
+      --gold: #e8b84b;
+      --rose: #e8536a;
+      --pink: #ff4d94;
+      --warm-white: #f5efe6;
+      --muted: #7a7570;
+      --muted-dim: #4a4540;
+    }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      font-family: 'Noto Sans SC', sans-serif;
+      color: var(--warm-white);
+    }
+
+    /* ── 视频层 ── */
+    #video {
+      position: fixed; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+      z-index: 1;
+      opacity: 0.3;
+    }
+
+    /* ── 粒子 + 骨架层 ── */
+    canvas#fx {
+      position: fixed; inset: 0;
+      width: 100%; height: 100%;
+      z-index: 10;
+    }
+
+    /* 隐藏离屏画布 */
+    canvas#offscreen { display: none; }
+
+    /* ── 顶部栏 ── */
+    .top-bar {
+      position: fixed; top: 0; left: 0; right: 0;
+      display: flex; justify-content: space-between; align-items: flex-start;
+      padding: 20px 28px; z-index: 20; pointer-events: none;
+    }
+    .brand h1 {
+      font-family: 'ZCOOL KuaiLe', cursive;
+      font-size: 24px; color: var(--gold);
+      text-shadow: 0 0 28px rgba(232,184,75,0.2);
+    }
+    .brand p { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .status-group {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; color: var(--muted);
+    }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #555; transition: all 0.5s;
+    }
+    .dot.ok  { background: #4ade80; box-shadow: 0 0 8px rgba(74,222,128,0.5); }
+    .dot.warn { background: #f59e0b; box-shadow: 0 0 8px rgba(245,158,11,0.4); }
+    .dot.err { background: #ef4444; box-shadow: 0 0 8px rgba(239,68,68,0.4); }
+
+    /* ── 引导 ── */
+    .guide {
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%);
+      z-index: 30; text-align: center; pointer-events: none;
+      transition: opacity 1s ease;
+    }
+    .guide.done { opacity: 0; }
+    .guide h2 {
+      font-family: 'ZCOOL KuaiLe', cursive; font-size: 42px;
+      background: linear-gradient(135deg, var(--gold), var(--rose));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; margin-bottom: 12px;
+    }
+    .guide p { font-size: 14px; color: var(--muted); line-height: 2; }
+    .guide .tip {
+      display: inline-block; margin-top: 14px;
+      padding: 7px 18px; border: 1px solid rgba(232,184,75,0.2);
+      border-radius: 20px; font-size: 12px; color: var(--gold); opacity: 0.7;
+    }
+    .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid rgba(232,184,75,0.15);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+      margin: 0 auto 14px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── 底部手势提示 ── */
+    .gesture-bar {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      display: flex; justify-content: center; gap: 32px;
+      padding: 18px 20px; z-index: 20; pointer-events: none;
+      opacity: 0; transition: opacity 0.6s;
+    }
+    .gesture-bar.show { opacity: 1; }
+    .gi { text-align: center; }
+    .gi .ic { font-size: 26px; margin-bottom: 5px; }
+    .gi .lb { font-size: 11px; color: var(--muted-dim); transition: color 0.3s; }
+    .gi.on .lb { color: var(--gold); }
+
+    /* ── 当前手势 ── */
+    .now-gesture {
+      position: fixed; bottom: 76px; left: 50%; transform: translateX(-50%);
+      z-index: 20; text-align: center; pointer-events: none; opacity: 0;
+      transition: opacity 0.5s;
+    }
+    .now-gesture.show { opacity: 1; }
+    .now-gesture .label { font-size: 11px; color: var(--muted); margin-bottom: 2px; }
+    .now-gesture .name {
+      font-family: 'ZCOOL KuaiLe', cursive; font-size: 18px; color: var(--gold);
+    }
+
+    /* ── 错误层 ── */
+    .err-layer {
+      position: fixed; inset: 0; z-index: 200;
+      display: none; flex-direction: column; justify-content: center; align-items: center;
+      background: rgba(8,7,14,0.95); backdrop-filter: blur(20px);
+      gap: 12px; padding: 32px;
+    }
+    .err-layer.show { display: flex; }
+    .err-layer h3 {
+      font-family: 'ZCOOL KuaiLe', cursive; font-size: 24px; color: var(--rose);
+    }
+    .err-layer p { font-size: 14px; color: var(--muted); max-width: 440px; text-align: center; line-height: 1.8; }
+    .err-layer .retry {
+      margin-top: 8px; padding: 8px 24px; border: 1px solid var(--gold);
+      border-radius: 20px; background: transparent; color: var(--gold);
+      font-family: inherit; font-size: 13px; cursor: pointer; pointer-events: auto;
+      transition: background 0.3s;
+    }
+    .err-layer .retry:hover { background: rgba(232,184,75,0.12); }
+
+    /* ── 调试条 ── */
+    .debug {
+      position: fixed; bottom: 110px; left: 50%; transform: translateX(-50%);
+      z-index: 25; font-size: 11px; color: var(--muted-dim);
+      font-family: 'Courier New', monospace; text-align: center;
+      pointer-events: none; opacity: 0.7;
+    }
+
+    @media (max-width: 600px) {
+      .brand h1 { font-size: 18px; }
+      .guide h2 { font-size: 30px; }
+      .gesture-bar { gap: 18px; }
+      .gi .ic { font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <video id="video" playsinline autoplay muted></video>
+  <canvas id="offscreen"></canvas>
+  <canvas id="fx"></canvas>
+
+  <div class="top-bar">
+    <div class="brand">
+      <h1>✋ 手势粒子魔法</h1>
+      <p>实时手势追踪 · 互动体验</p>
+    </div>
+    <div class="status-group">
+      <span class="dot" id="dot"></span>
+      <span id="stxt">正在初始化...</span>
+    </div>
+  </div>
+
+  <div class="guide" id="guide">
+    <div class="spinner" id="spinner"></div>
+    <h2>准备就绪</h2>
+    <p>将手掌放在摄像头前<br>用指尖创造粒子魔法</p>
+    <span class="tip">提示：确保房间光线充足</span>
+  </div>
+
+  <div class="gesture-bar" id="gBar">
+    <div class="gi" id="g1"><div class="ic">👆</div><div class="lb">移动 = 粒子轨迹</div></div>
+    <div class="gi" id="g2"><div class="ic">🤏</div><div class="lb">捏合 = 粒子爆发</div></div>
+    <div class="gi" id="g3"><div class="ic">✊</div><div class="lb">握拳 = 能量脉冲</div></div>
+    <div class="gi" id="g4"><div class="ic">🖐</div><div class="lb">张开 = 粒子雨</div></div>
+  </div>
+
+  <div class="now-gesture" id="nowG">
+    <div class="label">当前手势</div>
+    <div class="name" id="gName">等待检测...</div>
+  </div>
+
+  <div class="debug" id="debug"></div>
+
+  <div class="err-layer" id="errLayer">
+    <h3>出错了</h3>
+    <p id="errTxt"></p>
+    <button class="retry" onclick="location.reload()">重新加载</button>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/hands.min.js"></script>
+
+  <script>
+  // ═══════════════════════════════════════════════════════════════
+  //  手势粒子魔法 — 完整独立实现（镜像修复 + 握拳检测优化）
+  // ═══════════════════════════════════════════════════════════════
+
+  const videoEl   = document.getElementById('video');
+  const fxCanvas  = document.getElementById('fx');
+  const fx        = fxCanvas.getContext('2d');
+  const offCanvas = document.getElementById('offscreen');
+  const off       = offCanvas.getContext('2d');
+  const dotEl     = document.getElementById('dot');
+  const stxtEl    = document.getElementById('stxt');
+  const guideEl   = document.getElementById('guide');
+  const spinnerEl = document.getElementById('spinner');
+  const gBar      = document.getElementById('gBar');
+  const nowG      = document.getElementById('nowG');
+  const gNameEl   = document.getElementById('gName');
+  const errLayer  = document.getElementById('errLayer');
+  const errTxt    = document.getElementById('errTxt');
+  const debugEl   = document.getElementById('debug');
+
+  let W = 0, H = 0;
+  let particles = [], pool = [];
+  let firstDetect = false;
+  let lastLm = null;
+  let frames = 0;
+
+  const h = {
+    x: -1, y: -1, sx: -1, sy: -1, px: -1, py: -1,
+    vel: 0, open: 0, pinch: false, wasPinch: false,
+    fist: false, allUp: false, on: false,
+  };
+
+  const C = {
+    fade: 0.055, smooth: 0.35, maxP: 350, trail: 22,
+    pinchD: 0.065, spawnR: 5, burstN: 34,
+  };
+
+  const COL = { idle: [42,72,55], open: [340,70,58], pinch: [326,100,62], fist: [275,65,58] };
+
+  const lerp  = (a, b, t) => a + (b - a) * t;
+  const lerpC = (a, b, t) => [lerp(a[0],b[0],t), lerp(a[1],b[1],t), lerp(a[2],b[2],t)];
+  const dist  = (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by);
+  const hsl   = (h, s, l, a) => a != null ? `hsla(${h},${s}%,${l}%,${a})` : `hsl(${h},${s}%,${l}%)`;
+
+  function setStatus(txt, cls) {
+    stxtEl.textContent = txt;
+    dotEl.className = 'dot ' + (cls || '');
+    debugEl.textContent = '';
+  }
+
+  function showError(msg) {
+    errTxt.textContent = msg;
+    errLayer.classList.add('show');
+    setStatus('加载失败', 'err');
+    spinnerEl.style.display = 'none';
+  }
+
+  function dlog(msg) {
+    debugEl.textContent = msg;
+  }
+
+  // ─── 画布 ───
+  function resize() {
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    W = innerWidth; H = innerHeight;
+    [fxCanvas, offCanvas].forEach(c => {
+      c.width  = W * dpr;
+      c.height = H * dpr;
+      c.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
+    });
+  }
+  addEventListener('resize', resize);
+  resize();
+
+  // ─── 粒子 ───
+  function alloc() {
+    return pool.pop() || { x:0,y:0,vx:0,vy:0,life:0,ml:1,sz:1,se:0,h:0,s:0,l:0,a:1,t:[] };
+  }
+  function free(p) { p.t = []; if(pool.length < 700) pool.push(p); }
+
+  function spawn(x, y, hu, sa, li, o) {
+    if(particles.length >= C.maxP) return;
+    o = o || {};
+    const p   = alloc();
+    const ang = o.ang != null ? o.ang : Math.random() * Math.PI * 2;
+    const spd = o.spd != null ? o.spd : .5 + Math.random() * 2.5;
+    p.x   = x + (Math.random() - .5) * 5;
+    p.y   = y + (Math.random() - .5) * 5;
+    p.vx  = Math.cos(ang) * spd;
+    p.vy  = Math.sin(ang) * spd - (o.noG ? 0 : .11);
+    p.life = p.ml = o.life || (.6 + Math.random() * 1.1);
+    p.sz  = o.sz  || 1 + Math.random() * 3;
+    p.se  = o.se != null ? o.se : p.sz * .12;
+    p.h   = hu + (Math.random() - .5) * 16;
+    p.s   = sa; p.l = li; p.a = o.a || 1; p.t = [];
+    particles.push(p);
+  }
+
+  function burst(x, y, n, hu, sa, li, ex) {
+    ex = ex || {};
+    for(let i = 0; i < n; i++) {
+      const a = Math.PI * 2 * i / n + (Math.random() - .5) * .5;
+      spawn(x, y, hu, sa, li, {
+        ang: a, spd: 2.5 + Math.random() * 5 + (ex.sAdd || 0),
+        sz: 1.5 + Math.random() * 2.5, se: .15, life: .7 + Math.random() * 1.2, noG: true,
+      });
+    }
+  }
+
+  function shower(x, n) {
+    const c = COL.open;
+    for(let i = 0; i < n; i++) {
+      spawn(x + (Math.random() - .5) * 140, H + 10, c[0], c[1], c[2], {
+        ang: -Math.PI / 2 + (Math.random() - .5) * .45,
+        spd: 3 + Math.random() * 5, sz: 1 + Math.random() * 2, life: 1 + Math.random() * 1.4, noG: true,
+      });
+    }
+  }
+
+  function updateP(dt) {
+    for(let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.life -= dt;
+      if(p.life <= 0) { particles.splice(i, 1); free(p); continue; }
+      if(p.t.length < C.trail) p.t.push({ x: p.x, y: p.y });
+      else { p.t.shift(); p.t.push({ x: p.x, y: p.y }); }
+      p.vx *= .984; p.vy *= .984;
+      p.x += p.vx; p.y += p.vy;
+    }
+  }
+
+  // ─── 骨架连接 ───
+  const BONES = [
+    [0,1],[1,2],[2,3],[3,4],
+    [0,5],[5,6],[6,7],[7,8],
+    [5,9],[9,10],[10,11],[11,12],
+    [9,13],[13,14],[14,15],[15,16],
+    [13,17],[17,18],[18,19],[19,20],
+    [0,17],
+  ];
+  const TIPS = [4, 8, 12, 16, 20];
+
+  // ─── 渲染 ───
+  function render() {
+    requestAnimationFrame(render);
+    frames++;
+    const dt = 1 / 60;
+
+    // ── 粒子逻辑 ──
+    if(h.on) {
+      const sx = h.sx, sy = h.sy, v = Math.min(h.vel / 18, 1), op = h.open;
+
+      if(h.pinch && !h.wasPinch)
+        burst(sx, sy, C.burstN, COL.pinch[0], COL.pinch[1], COL.pinch[2], { sAdd: v * 3 });
+      h.wasPinch = h.pinch;
+
+      if(h.fist) {
+        const c = COL.fist;
+        for(let i = 0; i < 2; i++)
+          spawn(sx + (Math.random()-.5)*22, sy + (Math.random()-.5)*22, c[0], c[1], c[2], {
+            spd: .3 + Math.random()*.7, sz: 2 + Math.random()*2, life: .3 + Math.random()*.5, noG: true,
+          });
+      }
+
+      if(h.allUp && op > 0.38) shower(sx, 3);
+
+      if(!h.pinch && !h.fist) {
+        const c = lerpC(COL.idle, COL.open, Math.min(op / .5, 1));
+        const sp = Math.min(v * 3, 1);
+        const n = C.spawnR + Math.floor(sp * 3);
+        for(let i = 0; i < n; i++)
+          spawn(sx, sy, c[0], c[1], c[2], {
+            spd: .4 + Math.random() * (1 + sp * 2),
+            sz: .8 + Math.random() * (1.2 + sp * 1.5),
+            life: .5 + Math.random() * .85,
+          });
+      }
+    }
+
+    updateP(dt);
+
+    // ── 离屏画布：粒子（加法混合）──
+    off.clearRect(0, 0, W, H);
+    off.globalCompositeOperation = 'lighter';
+    for(let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+      const t = p.life / p.ml;
+      const a = p.a * t * t;
+      const s = p.se + (p.sz - p.se) * t;
+      if(a < .01 || s < .3) continue;
+
+      if(p.t.length > 1) {
+        off.beginPath();
+        off.moveTo(p.t[0].x, p.t[0].y);
+        for(let j = 1; j < p.t.length; j++) off.lineTo(p.t[j].x, p.t[j].y);
+        off.lineTo(p.x, p.y);
+        off.strokeStyle = hsl(p.h, p.s, p.l, a * .1);
+        off.lineWidth = s * .5;
+        off.stroke();
+      }
+
+      off.globalAlpha = a * .1;
+      off.fillStyle = hsl(p.h, p.s, p.l);
+      off.beginPath(); off.arc(p.x, p.y, s * 2.5, 0, Math.PI * 2); off.fill();
+
+      off.globalAlpha = a * .3;
+      off.beginPath(); off.arc(p.x, p.y, s * 1.3, 0, Math.PI * 2); off.fill();
+
+      off.globalAlpha = a * .85;
+      off.fillStyle = hsl(p.h, Math.max(0, p.s - 25), Math.min(92, p.l + 20));
+      off.beginPath(); off.arc(p.x, p.y, s * .6, 0, Math.PI * 2); off.fill();
+
+      off.globalAlpha = a * .7;
+      off.fillStyle = `hsla(${p.h},25%,95%,${a * .7})`;
+      off.beginPath(); off.arc(p.x, p.y, s * .22, 0, Math.PI * 2); off.fill();
+    }
+    off.globalAlpha = 1;
+    off.globalCompositeOperation = 'source-over';
+
+    // ── 主画布 ──
+    fx.clearRect(0, 0, W, H);
+
+    // 粒子叠加
+    fx.globalCompositeOperation = 'lighter';
+    fx.drawImage(offCanvas, 0, 0, W, H);
+    fx.globalCompositeOperation = 'source-over';
+
+    // 骨架
+    if(lastLm) {
+      fx.lineWidth = 1.2;
+      fx.lineCap = 'round';
+      for(const [a, b] of BONES) {
+        fx.beginPath();
+        fx.moveTo((1 - lastLm[a].x) * W, lastLm[a].y * H);
+        fx.lineTo((1 - lastLm[b].x) * W, lastLm[b].y * H);
+        fx.strokeStyle = 'rgba(232,184,75,0.15)';
+        fx.stroke();
+      }
+      for(let i = 0; i < 21; i++) {
+        const px = (1 - lastLm[i].x) * W, py = lastLm[i].y * H;
+        const tip = TIPS.includes(i);
+        if(tip) {
+          fx.beginPath(); fx.arc(px, py, 6, 0, Math.PI * 2);
+          fx.fillStyle = 'rgba(232,184,75,0.05)';
+          fx.fill();
+        }
+        fx.beginPath(); fx.arc(px, py, tip ? 4 : 1.5, 0, Math.PI * 2);
+        fx.fillStyle = tip ? 'rgba(232,184,75,0.7)' : 'rgba(232,184,75,0.2)';
+        fx.fill();
+      }
+    }
+
+    // 手势 UI
+    if(h.on) {
+      const g = h.pinch ? 'pinch' : h.fist ? 'fist' : h.allUp ? 'open' : 'idle';
+      gNameEl.textContent = { idle:'自由探索', pinch:'🤏 捏合', fist:'✊ 握拳', open:'🖐 张开' }[g];
+      document.getElementById('g1').classList.toggle('on', g === 'idle');
+      document.getElementById('g2').classList.toggle('on', g === 'pinch');
+      document.getElementById('g3').classList.toggle('on', g === 'fist');
+      document.getElementById('g4').classList.toggle('on', g === 'open');
+    }
+
+    if(frames % 60 === 0)
+      dlog(`粒子: ${particles.length} | 手: ${h.on ? '✓' : '×'} | 速度: ${h.vel.toFixed(1)} | 开合: ${h.open.toFixed(2)} | 拳: ${h.fist ? '✓' : '×'}`);
+  }
+
+  // ─── 手势分析 ───
+  function analyze(lm) {
+    const tip = lm[8];
+
+    // ✅ 镜像 x 坐标，匹配 CSS scaleX(-1) 的视频显示
+    h.x = (1 - tip.x) * W;
+    h.y = tip.y * H;
+
+    if(h.sx < 0) { h.sx = h.x; h.sy = h.y; }
+    else { h.sx = lerp(h.sx, h.x, C.smooth); h.sy = lerp(h.sy, h.y, C.smooth); }
+    h.vel = dist(h.x, h.y, h.px, h.py);
+    h.px = h.x; h.py = h.y;
+
+    // 开合度
+    const wr = lm[0];
+    let ds = 0;
+    for(const t of [8, 12, 16, 20]) ds += dist(lm[t].x, lm[t].y, wr.x, wr.y);
+    h.open = Math.min(ds / 4 / 0.32, 1);
+
+    // 捏合：拇指尖 ↔ 食指尖距离
+    h.pinch = dist(lm[4].x, lm[4].y, lm[8].x, lm[8].y) < C.pinchD;
+
+    // ✅ 改进握拳检测：基于关节位置比较
+    const fourCurled =
+      lm[8].y  > lm[6].y  &&  // 食指尖 < 食指 PIP
+      lm[12].y > lm[10].y &&  // 中指尖 < 中指 PIP
+      lm[16].y > lm[14].y &&  // 无名指尖 < 无名指 PIP
+      lm[20].y > lm[18].y;   // 小指尖 < 小指 PIP
+
+    const thumbCurled = dist(lm[4].x, lm[4].y, lm[5].x, lm[5].y) < 0.1;
+
+    h.fist = fourCurled && thumbCurled;
+
+    // 全部张开
+    h.allUp =
+      lm[8].y  < lm[6].y  &&
+      lm[12].y < lm[10].y &&
+      lm[16].y < lm[14].y &&
+      lm[20].y < lm[18].y;
+
+    h.on = true;
+  }
+
+  // ─── MediaPipe 回调 ───
+  function onResults(results) {
+    if(results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+      lastLm = results.multiHandLandmarks[0];
+      analyze(lastLm);
+      if(!firstDetect) {
+        firstDetect = true;
+        guideEl.classList.add('done');
+        gBar.classList.add('show');
+        nowG.classList.add('show');
+        spinnerEl.style.display = 'none';
+        setStatus('手势追踪中', 'ok');
+      }
+    } else {
+      lastLm = null;
+      h.on = false;
+      h.open *= .92;
+    }
+  }
+
+  // ─── 初始化 ───
+  async function init() {
+    setStatus('正在加载手部模型...', 'warn');
+
+    if(typeof Hands === 'undefined') {
+      await new Promise(r => setTimeout(r, 3000));
+      if(typeof Hands === 'undefined') {
+        showError('MediaPipe 库未加载，请检查网络连接后刷新页面。\n\n确保可以访问 cdn.jsdelivr.net');
+        return;
+      }
+    }
+
+    setStatus('正在初始化手部检测...', 'warn');
+
+    let mpHands;
+    try {
+      mpHands = new Hands({
+        locateFile: (file) =>
+          `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/${file}`,
+      });
+    } catch(e) {
+      showError('创建 Hands 实例失败: ' + e.message);
+      return;
+    }
+
+    mpHands.setOptions({
+      maxNumHands: 1,
+      modelComplexity: 1,
+      minDetectionConfidence: 0.65,
+      minTrackingConfidence: 0.55,
+    });
+    mpHands.onResults(onResults);
+
+    setStatus('正在启动摄像头...', 'warn');
+
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' },
+        audio: false,
+      });
+    } catch(e) {
+      const msg = e.name === 'NotAllowedError'
+        ? '摄像头权限被拒绝。请点击浏览器地址栏的摄像头图标，允许访问后刷新页面。'
+        : e.name === 'NotFoundError'
+        ? '未检测到摄像头设备。请连接摄像头后重试。'
+        : '无法启动摄像头: ' + e.message;
+      showError(msg);
+      return;
+    }
+
+    videoEl.srcObject = stream;
+
+    await new Promise((resolve, reject) => {
+      videoEl.onloadedmetadata = () => videoEl.play().then(resolve).catch(reject);
+      videoEl.onerror = () => reject(new Error('视频加载失败'));
+      setTimeout(() => reject(new Error('视频加载超时')), 10000);
+    });
+
+    setStatus('摄像头已启动，正在加载模型...', 'warn');
+
+    try { await mpHands.send({ image: videoEl }); } catch(e) { console.warn('首帧发送:', e); }
+
+    setStatus('手势追踪已就绪', 'ok');
+    render();
+
+    let sending = false;
+    async function frameLoop() {
+      if(!sending && videoEl.readyState >= 2) {
+        sending = true;
+        try { await mpHands.send({ image: videoEl }); } catch(e) { console.warn('帧处理:', e); }
+        sending = false;
+      }
+      requestAnimationFrame(frameLoop);
+    }
+    frameLoop();
+  }
+
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+  </script>
+</body>
+</html>
