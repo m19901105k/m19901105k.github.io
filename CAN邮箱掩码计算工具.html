@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAN邮箱掩码计算工具</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f4f1ea;
+            --surface: #ffffff;
+            --surface-2: #efecf3;
+            --surface-3: #faf9f6;
+            --border: #dbd6cc;
+            --border-light: #e8e4db;
+            --accent: #b08a1e;
+            --accent-hover: #9a7816;
+            --accent-soft: rgba(176,138,30,0.09);
+            --accent-line: rgba(176,138,30,0.45);
+            --text: #3a352e;
+            --text-muted: #908a80;
+            --text-bright: #1a1714;
+            --danger: #c94040;
+            --shadow-sm: 0 1px 3px rgba(40,35,25,0.06);
+            --shadow-md: 0 2px 8px rgba(40,35,25,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-image:
+                linear-gradient(rgba(0,0,0,0.018) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,0,0,0.018) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+
+        /* ── 顶部栏 ─────────────────────────────────── */
+        header {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 24px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+            flex-shrink: 0;
+            z-index: 10;
+        }
+        header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent 5%, var(--accent) 50%, transparent 95%);
+            opacity: .35;
+        }
+
+        .title {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 18px;
+            color: var(--text-bright);
+            letter-spacing: -0.02em;
+            user-select: none;
+        }
+        .title span { color: var(--accent); }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .ctrl-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .ctrl-group label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            white-space: nowrap;
+        }
+
+        input[type="number"] {
+            width: 72px;
+            padding: 7px 10px;
+            background: var(--surface-3);
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            color: var(--text-bright);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            outline: none;
+            transition: border-color .2s, box-shadow .2s;
+        }
+        input[type="number"]:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-soft);
+        }
+
+        .btn {
+            padding: 7px 18px;
+            border: none;
+            border-radius: 5px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .2s;
+            letter-spacing: .02em;
+            white-space: nowrap;
+        }
+        .btn-primary {
+            background: var(--accent);
+            color: #fffcf2;
+        }
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 14px rgba(176,138,30,.3);
+        }
+        .btn-secondary {
+            background: var(--surface-3);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        .btn-secondary:hover {
+            background: var(--border-light);
+            border-color: var(--text-muted);
+        }
+        .btn-sm { padding: 4px 10px; font-size: 11px; }
+
+        /* ── 主面板 ──────────────────────────────────── */
+        main { display: flex; flex: 1; overflow: hidden; }
+
+        .panel {
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border);
+            overflow: hidden;
+        }
+        .panel:last-child { border-right: none; }
+        .panel-left   { width: 25%; }
+        .panel-middle { width: 25%; }
+        .panel-right  { width: 50%; }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 16px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border-light);
+            flex-shrink: 0;
+        }
+        .panel-title {
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: .12em;
+        }
+        .panel-actions { display: flex; gap: 6px; }
+        .panel-body { flex: 1; overflow: hidden; }
+
+        textarea {
+            width: 100%; height: 100%;
+            padding: 14px 16px;
+            background: var(--surface-3);
+            border: none;
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12.5px;
+            line-height: 1.65;
+            resize: none;
+            outline: none;
+            tab-size: 4;
+        }
+        textarea::placeholder { color: var(--text-muted); opacity: .55; }
+        textarea::-webkit-scrollbar { width: 6px; }
+        textarea::-webkit-scrollbar-track { background: transparent; }
+        textarea::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        textarea::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+        /* ── 状态栏 ──────────────────────────────────── */
+        .status-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 7px 24px;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            font-size: 11px;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+        .hl { color: var(--accent); font-weight: 600; }
+
+        /* ── 底部版权栏 ──────────────────────────────── */
+        footer {
+            padding: 8px 24px;
+            background: var(--surface);
+            border-top: 1px solid var(--border-light);
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-muted);
+            flex-shrink: 0;
+            user-select: none;
+        }
+        footer span {
+            letter-spacing: .03em;
+        }
+
+        /* ── 提示框 ──────────────────────────────────── */
+        .toast {
+            position: fixed;
+            bottom: 72px; right: 24px;
+            padding: 9px 18px;
+            background: var(--surface);
+            border: 1px solid var(--accent);
+            border-radius: 6px;
+            color: var(--accent);
+            font-size: 11px;
+            box-shadow: var(--shadow-md);
+            opacity: 0;
+            transform: translateY(8px);
+            transition: all .25s;
+            z-index: 100;
+            pointer-events: none;
+        }
+        .toast.show { opacity: 1; transform: translateY(0); }
+
+        .kbd {
+            display: inline-block;
+            padding: 1px 5px;
+            font-size: 10px;
+            color: var(--text-muted);
+            background: var(--surface-3);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            margin-left: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            vertical-align: middle;
+        }
+
+        @media (max-width: 860px) {
+            main { flex-direction: column; }
+            .panel { width: 100% !important; border-right: none; border-bottom: 1px solid var(--border); min-height: 160px; }
+            header { flex-direction: column; gap: 10px; align-items: flex-start; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="title">CAN<span>邮箱掩码计算</span>工具</div>
+    <div class="controls">
+        <div class="ctrl-group">
+            <label>最大邮箱数</label>
+            <input type="number" id="maxMailboxes" value="58" min="1" max="256">
+        </div>
+        <button class="btn btn-primary" onclick="run()">执行合并<span class="kbd">Ctrl+Enter</span></button>
+        <button class="btn btn-secondary" onclick="loadSample()">加载示例</button>
+    </div>
+</header>
+
+<main>
+    <div class="panel panel-left">
+        <div class="panel-header">
+            <span class="panel-title">输入 ID</span>
+            <div class="panel-actions">
+                <button class="btn btn-secondary btn-sm" onclick="clearInput()">清空</button>
+            </div>
+        </div>
+        <div class="panel-body">
+            <textarea id="inputIds" spellcheck="false"
+                placeholder="在此粘贴 CAN ID …&#10;&#10;支持的格式：&#10;  18FEE917&#10;  0x18FEE917&#10;  18FEE917u&#10;  0x18FEE917u&#10;&#10;分隔符：空格 , ，换行 ;"></textarea>
+        </div>
+    </div>
+
+    <div class="panel panel-middle">
+        <div class="panel-header">
+            <span class="panel-title">排序后 ID</span>
+            <div class="panel-actions">
+                <button class="btn btn-secondary btn-sm" id="sortDirBtn" onclick="toggleSortDir()" title="切换排序方向">升序 ↑</button>
+                <button class="btn btn-secondary btn-sm" onclick="copyOut('sortedIds')">复制</button>
+            </div>
+        </div>
+        <div class="panel-body">
+            <textarea id="sortedIds" readonly spellcheck="false"
+                placeholder="排序后的 ID 将显示在此…"></textarea>
+        </div>
+    </div>
+
+    <div class="panel panel-right">
+        <div class="panel-header">
+            <span class="panel-title">输出结果</span>
+            <div class="panel-actions">
+                <button class="btn btn-secondary btn-sm" onclick="copyOut('outputBox')">复制</button>
+            </div>
+        </div>
+        <div class="panel-body">
+            <textarea id="outputBox" readonly spellcheck="false"
+                placeholder="合并后的邮箱输出将显示在此…"></textarea>
+        </div>
+    </div>
+</main>
+
+<div class="status-bar">
+    <span id="statusText">就绪 — 粘贴 ID 后点击"执行合并"</span>
+    <span id="statusCount"></span>
+</div>
+
+<footer>
+    <span>&copy; 2026 东风电驱动开发工具箱 | 孟柯</span>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ════════════════════════════════════════════════════
+   示例数据
+   ════════════════════════════════════════════════════ */
+const SAMPLE = [
+    '0x18FEE917, 0x18FEE900, 0x18FFEB51, 0x18FFEB50,',
+    '0x18FFEB4F, 0x18FFEB4E, 0x1CFF7017, 0x1CFEAF00,',
+    '0x18FFCC47, 0x18FFC4EE, 0x18FF8617, 0x18FF19F0,',
+    '0x18FEFC17, 0x18FEEE00, 0x18FEE681, 0x18FD9BA3,',
+    '0x18FD7C55, 0x18FD0700, 0x18D0FF17, 0x18FEF600,',
+    '0x18FEEF00, 0x18A9E827, 0x18A9E821, 0x18FFCD70,',
+    '0x18FFF24C, 0x18FFC893, 0x18FFC892, 0x18FFC891,',
+    '0x18FF4453, 0x1CFEAB03, 0x1CFE8100, 0x18FFF136,',
+    '0x18FFF04C, 0x18FFEB70, 0x18FFE683, 0x18FFE583,',
+    '0x18FFD6F2, 0x18FFD6F1, 0x18FFCCF5, 0x18FFCCF4,',
+    '0x18FFAB4C, 0x18FF874C, 0x18FF8717, 0x18FF6AAF,',
+    '0x18FF6017, 0x18FF4027, 0x18FF23F5, 0x18FF22F4,',
+    '0x18FF1500, 0x18FF0D21, 0x18FEFC00, 0x18FEF500,',
+    '0x18FEE500, 0x18FEBF0B, 0x18FEAE21, 0x18FE592F,',
+    '0x18FD7C00, 0x14FD68FE, 0x0C0BA027, 0x1CFEC300,',
+    '0x18FF3C50, 0x18FF3BFD, 0x18FF0A17, 0x18FF0121,',
+    '0x18FEF200, 0x18FEF100, 0x18FEC4C8, 0x18FEAB47,',
+    '0x18FE5BE8, 0x18FE4A03, 0x18FE1264, 0x18FDC40B,',
+    '0x18FD7B00, 0x18FC5AE8, 0x18F0A326, 0x18F00503,',
+    '0x18F0010B, 0x18F00029, 0x18F00010, 0x18F0000F,',
+    '0x10FE6FE8, 0x10FE6F2A, 0x0CFE5A2F, 0x0CF00400,',
+    '0x18FF0B21, 0x10FFB012, 0x10F007E8, 0x0CF02FA0,',
+    '0x0CF00300'
+].join('\n');
+
+/* ════════════════════════════════════════════════════
+   工具函数
+   ════════════════════════════════════════════════════ */
+function fmt(v) {
+    return '0x' + (v >>> 0).toString(16).toUpperCase().padStart(8, '0');
+}
+
+function parseIds(text) {
+    const out = [];
+    const tokens = text.split(/[\s,;，；、\n\r]+/);
+    for (let t of tokens) {
+        t = t.trim();
+        if (!t) continue;
+        t = t.replace(/^0[xX]/, '').replace(/[uU]$/, '');
+        if (!t || !/^[0-9a-fA-F]+$/.test(t)) continue;
+        const v = parseInt(t, 16);
+        if (!isNaN(v)) out.push(v >>> 0);
+    }
+    return out;
+}
+
+function hamming(x) {
+    x = x & 0xFFFF;
+    let c = 0;
+    while (x) { c += x & 1; x >>>= 1; }
+    return c;
+}
+
+function countZeros(mask) {
+    let c = 0;
+    const m = mask & 0xFFFF;
+    for (let i = 0; i < 16; i++) if ((m & (1 << i)) === 0) c++;
+    return c;
+}
+
+function mergeOrigins(a, b) {
+    const r = [...a];
+    for (const v of b) { if (!r.includes(v)) r.push(v); }
+    return r;
+}
+
+/* ════════════════════════════════════════════════════
+   排序方向切换
+   ════════════════════════════════════════════════════ */
+let sortDesc = false;
+
+function toggleSortDir() {
+    sortDesc = !sortDesc;
+    document.getElementById('sortDirBtn').textContent = sortDesc ? '降序 ↓' : '升序 ↑';
+
+    const ta = document.getElementById('sortedIds');
+    if (!ta.value.trim()) return;
+
+    const lines = ta.value.split('\n').filter(l => l.trim());
+    const vals = lines.map(l => parseInt(l.trim().replace(/^0[xX]/, '').replace(/,$/, ''), 16))
+                      .filter(v => !isNaN(v));
+    vals.sort((a, b) => sortDesc ? (b >>> 0) - (a >>> 0) : (a >>> 0) - (b >>> 0));
+    ta.value = vals.map(id => fmt(id) + ',').join('\n');
+}
+
+/* ════════════════════════════════════════════════════
+   复制功能（兼容 HTTP 环境）
+   ════════════════════════════════════════════════════ */
+function copyOut(elId) {
+    const ta = document.getElementById(elId);
+    if (!ta.value) {
+        showToast('没有可复制的内容');
+        return;
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(ta.value)
+            .then(() => showToast('已复制到剪贴板'))
+            .catch(() => fallbackCopy(ta));
+    } else {
+        fallbackCopy(ta);
+    }
+}
+
+function fallbackCopy(ta) {
+    ta.focus();
+    ta.select();
+    try {
+        const ok = document.execCommand('copy');
+        showToast(ok ? '已复制到剪贴板' : '复制失败，请手动选择复制');
+    } catch (_) {
+        showToast('复制失败，请手动选择复制');
+    }
+    const sel = window.getSelection();
+    if (sel) sel.removeAllRanges();
+}
+
+/* ════════════════════════════════════════════════════
+   核心算法（与 C 代码一致）
+   ════════════════════════════════════════════════════ */
+function mergeMailboxes(ids, maxBox) {
+    ids.sort((a, b) => (b >>> 0) - (a >>> 0));
+
+    let boxes = ids.map(id => ({
+        id: id >>> 0,
+        mask: 0x1FFFFFFF >>> 0,
+        origins: [id >>> 0]
+    }));
+
+    let iters = 0;
+
+    while (boxes.length > maxBox) {
+        let minDist = Infinity, mi = -1, mj = -1;
+
+        for (let i = 0; i < boxes.length && minDist !== 0; i++) {
+            for (let j = i + 1; j < boxes.length; j++) {
+                const ai = (boxes[i].id & boxes[i].mask & boxes[j].mask) >>> 0;
+                const bj = (boxes[j].id & boxes[i].mask & boxes[j].mask) >>> 0;
+                const base = hamming(((ai ^ bj) >>> 0) & 0xFFFF);
+                const m = countZeros(boxes[i].mask);
+                const n = countZeros(boxes[j].mask);
+                const dist = base + Math.min(m, n);
+                if (dist < minDist) { minDist = dist; mi = i; mj = j; }
+            }
+        }
+
+        const newMask = ((~(boxes[mi].id ^ boxes[mj].id)) >>> 0)
+                       & ((boxes[mi].mask & boxes[mj].mask) >>> 0);
+
+        const nb = {
+            id: boxes[mi].id,
+            mask: newMask,
+            origins: mergeOrigins(boxes[mi].origins, boxes[mj].origins)
+        };
+
+        const i1 = Math.min(mi, mj), i2 = Math.max(mi, mj);
+        boxes.splice(i2, 1);
+        boxes.splice(i1, 1);
+        boxes.push(nb);
+        iters++;
+    }
+
+    boxes.sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+    return { boxes, iters };
+}
+
+/* ════════════════════════════════════════════════════
+   UI 操作
+   ════════════════════════════════════════════════════ */
+function loadSample() {
+    document.getElementById('inputIds').value = SAMPLE;
+    showToast('已加载示例数据 — 97 个 ID');
+}
+
+function clearInput() {
+    document.getElementById('inputIds').value = '';
+    document.getElementById('sortedIds').value = '';
+    document.getElementById('outputBox').value = '';
+    setStatus('已清空 — 粘贴 ID 后点击"执行合并"', '');
+}
+
+function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(el._t);
+    el._t = setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+function setStatus(html, count) {
+    document.getElementById('statusText').innerHTML = html;
+    document.getElementById('statusCount').innerHTML = count;
+}
+
+function run() {
+    const raw = document.getElementById('inputIds').value;
+    const ids = parseIds(raw);
+
+    if (ids.length === 0) {
+        showToast('未找到有效的 ID');
+        setStatus('<span style="color:#c94040">未找到有效的 ID</span>', '');
+        return;
+    }
+
+    const maxBox = Math.max(1, parseInt(document.getElementById('maxMailboxes').value) || 58);
+
+    const unique = [...new Set(ids)];
+    const dupes = ids.length - unique.length;
+
+    const sorted = [...unique].sort((a, b) => sortDesc ? (b >>> 0) - (a >>> 0) : (a >>> 0) - (b >>> 0));
+    document.getElementById('sortedIds').value =
+        sorted.map(id => fmt(id) + ',').join('\n');
+
+    const t0 = performance.now();
+    const { boxes, iters } = mergeMailboxes(unique, maxBox);
+    const ms = (performance.now() - t0).toFixed(1);
+
+    const lines = boxes.map(b => {
+        const idStr   = fmt(b.id) + 'u';
+        const maskStr = fmt(b.mask);
+        const origins = b.origins.map(o => fmt(o)).join(', ');
+        return `    { ${idStr}, ${maskStr}},      //接收的ID有：${origins}`;
+    });
+
+    document.getElementById('outputBox').value = lines.join('\n');
+
+    const dupNote = dupes ? `（已去除 ${dupes} 个重复 ID）` : '';
+    setStatus(
+        `<span class="hl">${unique.length}</span> 个 ID → ` +
+        `<span class="hl">${boxes.length}</span> 个邮箱` +
+        `${dupNote} &nbsp;·&nbsp; ${iters} 次合并 &nbsp;·&nbsp; ${ms} ms`,
+        `${unique.length} → ${boxes.length}`
+    );
+
+    showToast(`合并完成，耗时 ${ms} ms`);
+}
+
+document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        run();
+    }
+});
+</script>
+</body>
+</html>

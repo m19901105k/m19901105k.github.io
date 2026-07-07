@@ -348,15 +348,15 @@
             .tool-grid {
                 grid-template-columns: 1fr;
             }
-            
+
             h1 {
                 font-size: 2.2rem;
             }
-            
+
             .card-actions {
                 flex-direction: column;
             }
-            
+
             .tool-grid-placeholder {
                 grid-template-columns: 1fr;
             }
@@ -503,13 +503,34 @@
                         </button>
                     </div>
                 </div>
+                <!-- 工具6: CAN邮箱掩码计算工具 -->
+                <div class="tool-card card-6">
+                    <div class="card-icon">
+                        <i class="fas fa-layer-group"></i>
+                    </div>
+                    <div class="tool-tags">
+                        <span class="tag tag-can">CAN总线</span><span class="tag tag-developer">开发工具</span><span class="tag tag-new">常用</span>
+                    </div>
+                    <h3>CAN邮箱掩码计算工具</h3>
+                    <p class="tool-description">
+                        将多个CAN ID自动合并为尽可能少的邮箱组，通过计算最优掩码实现一邮箱多ID接收。支持多种ID格式输入、自定义最大邮箱数、排序去重，自动生成可直接使用的邮箱配置代码。
+                    </p>
+                    <div class="card-actions">
+                        <a href="CAN邮箱掩码计算工具.html" class="btn btn-primary">
+                            <i class="fas fa-external-link-alt"></i> 打开工具
+                        </a>
+                        <button class="btn btn-secondary" onclick="showDetails('tool6')">
+                            <i class="fas fa-info-circle"></i> 详细说明
+                        </button>
+                    </div>
+                </div>
             </section>
 
             <!-- 未来扩展区域 -->
             <section class="coming-soon">
                 <h2><i class="fas fa-rocket"></i> 更多工具即将上线</h2>
                 <p style="color: rgba(255, 255, 255, 0.8); margin-bottom: 30px;">我们正在开发更多实用工具，敬请期待！</p>
-                
+
                 <div class="tool-grid-placeholder">
                     <div class="placeholder-card">
                         <i class="fas fa-code"></i>
@@ -588,7 +609,7 @@
             const modal = document.getElementById('details-modal');
             const title = document.getElementById('modal-title');
             const content = document.getElementById('modal-content');
-            
+
             let toolDetails = {
                                 tool1: {
                     title: '字节与位转换工具',
@@ -609,9 +630,13 @@
                 tool5: {
                     title: 'CAN busoff分析工具',
                     content: `<h4>功能特点：</h4>\n                <ul style="margin: 10px 0 20px 20px; line-height: 1.6;">\n                    <li>实时分析CAN总线错误日志</li><li>自动识别busoff恢复事件</li><li>检测快恢复（45-70ms）和慢恢复（180-220ms）</li><li>在日志中高亮标记错误恢复行</li><li>自动统计恢复事件数量</li><li>计算重试帧数（自动+1）</li><li>支持大容量日志分析</li><li>完全离线运行，数据安全</li>\n                </ul><h4>使用场景：</h4>\n                <p>CAN总线故障诊断、网络通信分析、ECU开发测试、汽车电子调试。</p><h4>补充说明：</h4>\n                <p>输入格式：支持标准CAN分析仪日志格式<br>分析规则：<br>• 时间间隔>1ms：判断为busoff恢复尝试<br>• 45-70ms：快恢复（自动标记为蓝色）<br>• 180-220ms：慢恢复（自动标记为蓝色）<br>• 其他时间：异常恢复（自动标记为红色）<br>• 重试帧数自动+1（包含首帧）</p>`
+                },
+                tool6: {
+                    title: 'CAN邮箱掩码计算工具',
+                    content: `<h4>功能特点：</h4>\n                <ul style="margin: 10px 0 20px 20px; line-height: 1.6;">\n                    <li>自动合并CAN ID为最少邮箱组，基于汉明距离最小化贪心算法计算最优掩码</li><li>支持多种CAN ID输入格式：0x18FEE917、18FEE917、0x18FEE917u等，分隔符支持空格、逗号、分号等</li><li>可自定义最大邮箱数量，自动控制合并粒度</li><li>自动排序、去重，并统计重复ID数量</li><li>实时生成邮箱配置代码（ID + 掩码），附带接收ID列表注释</li>\n                </ul><h4>使用场景：</h4>\n                <p>CAN总线邮箱配置、嵌入式开发、汽车电子控制器CAN接收过滤设计、多ID合并优化、通信协议设计等。</p><h4>补充说明：</h4>\n                <p>合并原理说明：<br>算法对所有CAN ID按两两之间的掩码差异（汉明距离）进行贪心合并，每次合并距离最小的两个邮箱组，直到邮箱数不超过设定上限。<br><strong>输出格式示例：</strong><br>每个邮箱行包含 ID（带0x前缀和u后缀）、掩码，以及该邮箱实际接收的原始ID列表注释，可直接用于嵌入式代码开发。</p>`
                 }
             };
-            
+
             if (toolDetails[toolId]) {
                 title.textContent = toolDetails[toolId].title;
                 content.innerHTML = toolDetails[toolId].content;
@@ -629,10 +654,10 @@
             // 更新时间
             updateTime();
             setInterval(updateTime, 1000);
-            
+
             // 获取IP信息
             getServerIP();
-            
+
             // 为卡片添加点击效果
             document.querySelectorAll('.tool-card').forEach(card => {
                 card.addEventListener('click', function(e) {
@@ -659,31 +684,32 @@
                 50% { transform: scale(1.05); }
                 100% { transform: scale(1); }
             }
-            
+
             .btn:active {
                 transform: scale(0.98);
             }
-            
+
             @media (max-width: 480px) {
                 .tool-card {
                     padding: 20px;
                 }
-                
+
                 h1 {
                     font-size: 1.8rem;
                 }
-                
+
                 .subtitle {
                     font-size: 1rem;
                 }
             }
-            
+
             /* 卡片动画延迟 */
             .tool-card:nth-child(1) { animation-delay: 0.1s; }
             .tool-card:nth-child(2) { animation-delay: 0.2s; }
-            .tool-card:nth-child(3) { animation-delay: 0.30000000000000004s; }
+            .tool-card:nth-child(3) { animation-delay: 0.3s; }
             .tool-card:nth-child(4) { animation-delay: 0.4s; }
             .tool-card:nth-child(5) { animation-delay: 0.5s; }
+            .tool-card:nth-child(6) { animation-delay: 0.6s; }
         `;
         document.head.appendChild(style);
     </script>
